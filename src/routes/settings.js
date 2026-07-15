@@ -33,7 +33,15 @@ settingsRouter.get('/', (req, res) => {
 });
 
 settingsRouter.put('/', (req, res) => {
-  const { app_title, tasks_per_page, weather_apikey, password_protection_enabled, app_password } = req.body;
+  const {
+    app_title,
+    tasks_per_page,
+    weather_apikey,
+    password_protection_enabled,
+    app_password,
+    background_type,
+    background_url
+  } = req.body;
   if (!app_title || !tasks_per_page) {
     return res.status(400).json({ error: 'App Title and Tasks Per Page are required.' });
   }
@@ -61,6 +69,17 @@ settingsRouter.put('/', (req, res) => {
           (app_password || '').trim()
         );
       }
+
+      if (background_type !== undefined) {
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+          'background_type',
+          background_type
+        );
+      }
+
+      if (background_url !== undefined) {
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('background_url', background_url);
+      }
     });
     updateTx();
 
@@ -78,7 +97,9 @@ settingsRouter.put('/', (req, res) => {
       tasks_per_page,
       weather_apikey: maskedApiKey,
       password_protection_enabled: !!password_protection_enabled,
-      app_password: maskedPassword
+      app_password: maskedPassword,
+      background_type: background_type || 'none',
+      background_url: background_url || ''
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -120,6 +141,72 @@ settingsRouter.post('/authenticate', (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+const fs = require('fs');
+
+// GET background image
+settingsRouter.get('/background', (req, res) => {
+  const filePath = '/data/background.jpg';
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+    res.sendFile(filePath);
+  } else {
+    res.status(404).json({ error: 'No custom background active.' });
+  }
+});
+
+// POST save background image from base64
+settingsRouter.post('/background', (req, res) => {
+  const { image } = req.body;
+  if (!image) {
+    return res.status(400).json({ error: 'Image data is required.' });
+  }
+  try {
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    fs.writeFileSync('/data/background.jpg', buffer);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save background image: ' + err.message });
+  }
+});
+
+// POST proxy external image download
+settingsRouter.post('/background/fetch-external', async (req, res) => {
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).json({ error: 'URL is required.' });
+  }
+  try {
+    const imageRes = await fetch(url);
+    if (!imageRes.ok) {
+      throw new Error(`Failed to fetch image: HTTP ${imageRes.status}`);
+    }
+    const contentType = imageRes.headers.get('content-type') || '';
+    if (!contentType.startsWith('image/')) {
+      throw new Error('Fetched URL is not an image');
+    }
+    const arrayBuffer = await imageRes.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    const base64 = buffer.toString('base64');
+    res.json({ contentType, data: base64 });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch image: ' + err.message });
+  }
+});
+
+// DELETE clear background image
+settingsRouter.delete('/background', (req, res) => {
+  const filePath = '/data/background.jpg';
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete background: ' + err.message });
   }
 });
 

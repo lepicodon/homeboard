@@ -5,6 +5,11 @@ services:
     restart: unless-stopped
     ports:
       - '3000:3000'
+    # Note: The container runs as the non-root 'node' user (UID 1000) for security.
+    # If the './data' folder does not exist on the host, Docker will create it owned by root,
+    # causing a startup crash. Ensure the folder is pre-created and writable:
+    # Linux: 'mkdir -p data && sudo chown -R 1000:1000 data'
+    # macOS/Windows: 'mkdir -p data'
     volumes:
       - ./data:/data
     environment:

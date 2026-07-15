@@ -23,5 +23,7 @@ export const state = {
     assignee: 'all'
   },
   currentEditingTaskId: null,
-  currentDeletingItem: { type: null, id: null }
+  currentDeletingItem: { type: null, id: null },
+  backgroundType: 'none',
+  backgroundUrl: ''
 };

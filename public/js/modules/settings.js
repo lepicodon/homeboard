@@ -8,7 +8,6 @@ import {
   fetchShopping,
   fetchTasks,
   fetchSettings,
-  fetchWeather,
   confirmDelete
 } from '../app.js';
 
@@ -492,29 +491,201 @@ export function initSystemSettingsEvents() {
   }
 }
 
-export function initWeatherEvents() {
-  const weatherSettingsForm = document.getElementById('weatherSettingsForm');
-  if (weatherSettingsForm) {
-    weatherSettingsForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const settingWeatherApiKey = document.getElementById('settingWeatherApiKey');
+export function initBackgroundEvents() {
+  const backgroundSettingsForm = document.getElementById('backgroundSettingsForm');
+  const settingBackgroundType = document.getElementById('settingBackgroundType');
+  const customBackgroundOptions = document.getElementById('customBackgroundOptions');
 
-      const app_title = state.appTitle;
-      const tasks_per_page = state.tasksPerPage;
-      const weather_apikey = settingWeatherApiKey ? settingWeatherApiKey.value.trim() : '';
+  const uploadBackgroundBtn = document.getElementById('uploadBackgroundBtn');
+  const backgroundFileInput = document.getElementById('backgroundFileInput');
+  const clearBackgroundBtn = document.getElementById('clearBackgroundBtn');
+
+  const settingBackgroundUrl = document.getElementById('settingBackgroundUrl');
+  const importBackgroundUrlBtn = document.getElementById('importBackgroundUrlBtn');
+
+  const backgroundPreviewPlaceholder = document.getElementById('backgroundPreviewPlaceholder');
+  const backgroundPreviewImg = document.getElementById('backgroundPreviewImg');
+
+  if (settingBackgroundType) {
+    settingBackgroundType.addEventListener('change', (e) => {
+      const isCustom = e.target.value === 'custom';
+      if (isCustom) {
+        customBackgroundOptions.classList.remove('hidden');
+      } else {
+        customBackgroundOptions.classList.add('hidden');
+      }
+    });
+  }
+
+  // Handle local file selection and canvas-based optimization
+  if (uploadBackgroundBtn && backgroundFileInput) {
+    uploadBackgroundBtn.addEventListener('click', () => {
+      backgroundFileInput.click();
+    });
+
+    backgroundFileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Perform image downscaling & JPEG compression via canvas
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1920;
+
+          // Downscale maintaining aspect ratio
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // Get optimized 85% quality JPEG Base64
+          const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+          // Show preview immediately
+          if (backgroundPreviewPlaceholder) backgroundPreviewPlaceholder.classList.add('hidden');
+          if (backgroundPreviewImg) {
+            backgroundPreviewImg.src = optimizedBase64;
+            backgroundPreviewImg.classList.remove('hidden');
+          }
+          if (clearBackgroundBtn) clearBackgroundBtn.classList.remove('hidden');
+
+          // Temporarily store base64 in a dataset on the form to save on submit
+          backgroundSettingsForm.dataset.pendingImage = optimizedBase64;
+        };
+        img.src = event.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Handle URL import proxy
+  if (importBackgroundUrlBtn && settingBackgroundUrl) {
+    importBackgroundUrlBtn.addEventListener('click', async () => {
+      const url = settingBackgroundUrl.value.trim();
+      if (!url) {
+        alert('Please enter a valid image URL.');
+        return;
+      }
+
+      importBackgroundUrlBtn.disabled = true;
+      importBackgroundUrlBtn.textContent = 'Importing...';
 
       try {
-        await api.saveSettings({
-          app_title,
-          tasks_per_page,
-          weather_apikey
-        });
-        await fetchSettings();
-        await fetchWeather();
-        alert('Weather API key saved successfully!');
+        const res = await api.fetchExternalBackground(url);
+        const imgUrl = `data:${res.contentType};base64,${res.data}`;
+
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 1920;
+
+          if (width > maxDim || height > maxDim) {
+            if (width > height) {
+              height = Math.round((height * maxDim) / width);
+              width = maxDim;
+            } else {
+              width = Math.round((width * maxDim) / height);
+              height = maxDim;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          const optimizedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+
+          if (backgroundPreviewPlaceholder) backgroundPreviewPlaceholder.classList.add('hidden');
+          if (backgroundPreviewImg) {
+            backgroundPreviewImg.src = optimizedBase64;
+            backgroundPreviewImg.classList.remove('hidden');
+          }
+          if (clearBackgroundBtn) clearBackgroundBtn.classList.remove('hidden');
+
+          backgroundSettingsForm.dataset.pendingImage = optimizedBase64;
+          alert('Image imported and optimized successfully! Click "Apply Wallpaper Mode" to save.');
+        };
+        img.src = imgUrl;
       } catch (err) {
-        console.error('Error saving weather settings:', err);
-        alert('Failed to save weather settings.');
+        console.error('Error importing image URL:', err);
+        alert('Failed to import image URL: ' + err.message);
+      } finally {
+        importBackgroundUrlBtn.disabled = false;
+        importBackgroundUrlBtn.textContent = 'Import';
+      }
+    });
+  }
+
+  // Handle clear background
+  if (clearBackgroundBtn) {
+    clearBackgroundBtn.addEventListener('click', () => {
+      if (backgroundPreviewImg) {
+        backgroundPreviewImg.src = '';
+        backgroundPreviewImg.classList.add('hidden');
+      }
+      if (backgroundPreviewPlaceholder) backgroundPreviewPlaceholder.classList.remove('hidden');
+      clearBackgroundBtn.classList.add('hidden');
+      if (backgroundFileInput) backgroundFileInput.value = '';
+      delete backgroundSettingsForm.dataset.pendingImage;
+      backgroundSettingsForm.dataset.clearImage = 'true';
+    });
+  }
+
+  // Form submit saving settings
+  if (backgroundSettingsForm) {
+    backgroundSettingsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const type = settingBackgroundType ? settingBackgroundType.value : 'none';
+      const url = settingBackgroundUrl ? settingBackgroundUrl.value.trim() : '';
+
+      try {
+        // 1. If we have a pending image to save, upload it first
+        if (backgroundSettingsForm.dataset.pendingImage) {
+          await api.uploadBackground(backgroundSettingsForm.dataset.pendingImage);
+          delete backgroundSettingsForm.dataset.pendingImage;
+          localStorage.setItem('background_ts', Date.now()); // bust cache
+        } else if (backgroundSettingsForm.dataset.clearImage === 'true') {
+          await api.deleteBackground();
+          delete backgroundSettingsForm.dataset.clearImage;
+        }
+
+        // 2. Save settings state
+        const currentSettings = await api.getSettings();
+        await api.saveSettings({
+          app_title: currentSettings.app_title || state.appTitle,
+          tasks_per_page: currentSettings.tasks_per_page || state.tasksPerPage,
+          weather_apikey: '******',
+          password_protection_enabled: currentSettings.password_protection_enabled,
+          app_password: '******',
+          background_type: type,
+          background_url: url
+        });
+
+        await fetchSettings();
+        alert('Background settings saved successfully!');
+      } catch (err) {
+        console.error('Error saving background settings:', err);
+        alert('Failed to save background settings.');
       }
     });
   }
@@ -551,7 +722,7 @@ export function initSettingsEvents() {
 
   initAvatarUpload();
   initSystemSettingsEvents();
-  initWeatherEvents();
+  initBackgroundEvents();
   initPasswordEvents();
 }
 

@@ -411,6 +411,8 @@ if (settingsCount === 0) {
   insertSetting.run('weather_apikey', '');
   insertSetting.run('password_protection_enabled', '0');
   insertSetting.run('app_password', '');
+  insertSetting.run('background_type', 'none');
+  insertSetting.run('background_url', '');
 } else {
   // Ensure all keys exist for existing tables
   db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('app_title', 'HomeBoard');
@@ -419,6 +421,8 @@ if (settingsCount === 0) {
   db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('weather_apikey', '');
   db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('password_protection_enabled', '0');
   db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('app_password', '');
+  db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('background_type', 'none');
+  db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('background_url', '');
 }
 
 module.exports = db;

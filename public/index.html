@@ -26,64 +26,88 @@
     <!-- Web Application Layout -->
     <div class="app-container">
       <!-- Sidebar Navigation -->
-      <aside class="sidebar">
+      <aside class="sidebar" id="appSidebar">
         <div class="sidebar-header">
-          <div class="logo">
+          <a href="#tasks" class="logo" id="logoLink" title="Go to Tasks">
             <span class="logo-icon">🏠</span>
             <span class="logo-text">HomeBoard</span>
-          </div>
+          </a>
           <!-- Sidebar Weather Quick Widget -->
           <div id="sidebarWeatherWidget" class="sidebar-weather-widget">
             <!-- Populated dynamically -->
           </div>
+          <!-- Desktop Sidebar Toggle Button -->
+          <button
+            id="desktopSidebarToggle"
+            class="desktop-sidebar-toggle"
+            aria-label="Toggle Sidebar"
+            title="Collapse Sidebar"
+          >
+            <span class="toggle-icon">◀</span>
+          </button>
+          <!-- Mobile Menu Toggle Button -->
+          <button id="mobileMenuToggle" class="mobile-menu-toggle" aria-label="Toggle Menu" title="Toggle Menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
         </div>
 
-        <nav class="sidebar-nav">
-          <a href="#tasks" class="nav-item active" id="navTasks">
-            <span class="nav-icon">📋</span>
-            <span class="nav-label">Tasks</span>
-          </a>
-          <a href="#calendar" class="nav-item" id="navCalendar">
-            <span class="nav-icon">📅</span>
-            <span class="nav-label">Calendar</span>
-          </a>
-          <a href="#memos" class="nav-item" id="navMemos">
-            <span class="nav-icon">📌</span>
-            <span class="nav-label">Memos</span>
-          </a>
-          <a href="#shopping" class="nav-item" id="navShopping">
-            <span class="nav-icon">🛒</span>
-            <span class="nav-label">Shopping</span>
-          </a>
-          <a href="#weather" class="nav-item" id="navWeather">
-            <span class="nav-icon">🌤️</span>
-            <span class="nav-label">Weather</span>
-          </a>
-          <a href="#settings" class="nav-item" id="navSettings">
-            <span class="nav-icon">⚙️</span>
-            <span class="nav-label">Settings</span>
-          </a>
-        </nav>
+        <div class="sidebar-content-wrapper" id="sidebarContentWrapper">
+          <div class="sidebar-content">
+            <nav class="sidebar-nav">
+              <a href="#tasks" class="nav-item active" id="navTasks" title="Tasks">
+                <span class="nav-icon">📋</span>
+                <span class="nav-label">Tasks</span>
+              </a>
+              <a href="#calendar" class="nav-item" id="navCalendar" title="Calendar">
+                <span class="nav-icon">📅</span>
+                <span class="nav-label">Calendar</span>
+              </a>
+              <a href="#memos" class="nav-item" id="navMemos" title="Memos">
+                <span class="nav-icon">📌</span>
+                <span class="nav-label">Memos</span>
+              </a>
+              <a href="#shopping" class="nav-item" id="navShopping" title="Shopping">
+                <span class="nav-icon">🛒</span>
+                <span class="nav-label">Shopping</span>
+              </a>
+              <a href="#weather" class="nav-item" id="navWeather" title="Weather">
+                <span class="nav-icon">🌤️</span>
+                <span class="nav-label">Weather</span>
+              </a>
+              <a href="#settings" class="nav-item" id="navSettings" title="Settings">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Settings</span>
+              </a>
+            </nav>
 
-        <!-- Sidebar Stats Panel -->
-        <div class="sidebar-stats">
-          <div class="stats-title">Today's Progress</div>
-          <div class="stats-bar-container">
-            <div class="stats-bar" id="progressBar" style="width: 0%"></div>
+            <!-- Sidebar Stats Panel -->
+            <div class="sidebar-stats">
+              <div class="stats-title">Today's Progress</div>
+              <div class="stats-bar-container">
+                <div class="stats-bar" id="progressBar" style="width: 0%"></div>
+              </div>
+              <div class="stats-text" id="progressText">0 of 0 tasks completed</div>
+            </div>
+
+            <!-- Theme Switcher & Footer -->
+            <div class="sidebar-footer">
+              <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle dark/light theme" title="Dark Mode">
+                <span class="theme-icon">🌓</span>
+                <span class="theme-label">Dark Mode</span>
+              </button>
+              <button
+                id="logoutBtn"
+                class="logout-btn hidden"
+                aria-label="Lock / Logout from Dashboard"
+                title="Lock Dashboard"
+              >
+                <span class="logout-icon">🔒</span>
+                <span class="logout-label">Lock Dashboard</span>
+              </button>
+            </div>
           </div>
-          <div class="stats-text" id="progressText">0 of 0 tasks completed</div>
-        </div>
-
-        <!-- Theme Switcher & Footer -->
-        <div class="sidebar-footer">
-          <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle dark/light theme">
-            <span class="theme-icon">🌙</span>
-            <span class="theme-label">Dark Mode</span>
-          </button>
-          <button id="logoutBtn" class="logout-btn hidden" aria-label="Lock / Logout from Dashboard">
-            <span class="logout-icon">🔒</span>
-            <span class="logout-label">Lock Dashboard</span>
-          </button>
         </div>
       </aside>
 
@@ -97,67 +121,100 @@
               <p class="header-subtitle" id="currentDate">Sunday, July 12</p>
             </div>
 
-            <div class="header-actions">
-              <!-- View Switcher -->
-              <div class="view-switcher-group">
-                <button id="viewGridBtn" class="btn-view active" title="Grid View">⊞</button>
-                <button id="viewListBtn" class="btn-view" title="List View">☰</button>
-              </div>
+            <!-- Mobile page controls for actions and filters -->
+            <div class="mobile-page-controls">
+              <button
+                type="button"
+                id="mobileActionsToggle"
+                class="btn-mobile-toggle"
+                aria-expanded="false"
+                aria-label="Toggle Actions"
+              >
+                <span class="toggle-icon">⚡</span>
+                <span class="toggle-label">Actions</span>
+              </button>
+              <button
+                type="button"
+                id="mobileFiltersToggle"
+                class="btn-mobile-toggle"
+                aria-expanded="false"
+                aria-label="Toggle Filters"
+              >
+                <span class="toggle-icon">🔍</span>
+                <span class="toggle-label">Filters</span>
+                <span id="mobileFilterBadge" class="mobile-filter-badge hidden">0</span>
+              </button>
+            </div>
 
-              <button id="printBtn" class="btn btn-secondary btn-icon-text">
-                <span class="btn-icon">🖨️</span>
-                <span>Print Checklist</span>
-              </button>
-              <button id="addTaskBtn" class="btn btn-primary btn-icon-text">
-                <span class="btn-icon">➕</span>
-                <span>Add Task</span>
-              </button>
+            <div id="tasksActionsCollapse" class="mobile-collapse-container">
+              <div class="mobile-collapse-inner">
+                <div class="header-actions">
+                  <!-- View Switcher -->
+                  <div class="view-switcher-group">
+                    <button id="viewGridBtn" class="btn-view active" title="Grid View">⊞</button>
+                    <button id="viewListBtn" class="btn-view" title="List View">☰</button>
+                  </div>
+
+                  <button id="printBtn" class="btn btn-secondary btn-icon-text">
+                    <span class="btn-icon">🖨️</span>
+                    <span class="btn-text">Print Checklist</span>
+                  </button>
+                  <button id="addTaskBtn" class="btn btn-primary btn-icon-text">
+                    <span class="btn-icon">➕</span>
+                    <span class="btn-text">Add Task</span>
+                  </button>
+                </div>
+              </div>
             </div>
           </header>
 
           <!-- Filters and Search Bar (Optimised layout for single row) -->
-          <div class="filters-card">
-            <div class="filters-row">
-              <div class="search-box">
-                <span class="search-icon">🔍</span>
-                <input type="text" id="searchInput" placeholder="Search tasks by title or description..." />
-              </div>
+          <div id="tasksFiltersCollapse" class="mobile-collapse-container">
+            <div class="mobile-collapse-inner">
+              <div class="filters-card">
+                <div class="filters-row">
+                  <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="searchInput" placeholder="Search tasks by title or description..." />
+                  </div>
 
-              <div class="filter-group">
-                <label for="filterStatus">Status</label>
-                <select id="filterStatus">
-                  <option value="all">All Statuses</option>
-                  <option value="pending" selected>Pending</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
+                  <div class="filter-group">
+                    <label for="filterStatus">Status</label>
+                    <select id="filterStatus">
+                      <option value="all">All Statuses</option>
+                      <option value="pending" selected>Pending</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </div>
 
-              <div class="filter-group">
-                <label for="filterCategory">Category</label>
-                <select id="filterCategory">
-                  <option value="all">All Categories</option>
-                  <!-- Dynamically populated -->
-                </select>
-              </div>
+                  <div class="filter-group">
+                    <label for="filterCategory">Category</label>
+                    <select id="filterCategory">
+                      <option value="all">All Categories</option>
+                      <!-- Dynamically populated -->
+                    </select>
+                  </div>
 
-              <div class="filter-group">
-                <label for="filterSize">Size</label>
-                <select id="filterSize">
-                  <option value="all">All Sizes</option>
-                  <option value="small">Small</option>
-                  <option value="medium">Medium</option>
-                  <option value="big">Big</option>
-                </select>
-              </div>
+                  <div class="filter-group">
+                    <label for="filterSize">Size</label>
+                    <select id="filterSize">
+                      <option value="all">All Sizes</option>
+                      <option value="small">Small</option>
+                      <option value="medium">Medium</option>
+                      <option value="big">Big</option>
+                    </select>
+                  </div>
 
-              <div class="filter-group">
-                <label for="filterAssignee">Assignee</label>
-                <select id="filterAssignee">
-                  <option value="all">All Assignees</option>
-                  <option value="unassigned">Unassigned</option>
-                  <option value="other">Other</option>
-                  <!-- Dynamically populated members -->
-                </select>
+                  <div class="filter-group">
+                    <label for="filterAssignee">Assignee</label>
+                    <select id="filterAssignee">
+                      <option value="all">All Assignees</option>
+                      <option value="unassigned">Unassigned</option>
+                      <option value="other">Other</option>
+                      <!-- Dynamically populated members -->
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -464,20 +521,82 @@
           </header>
 
           <div class="settings-grid settings-row">
-            <!-- Weather Settings card -->
+            <!-- Background Settings card -->
             <div class="settings-card">
               <div class="card-header">
-                <span class="card-header-icon">🌤️</span>
-                <h2>Weather Settings</h2>
+                <span class="card-header-icon">🖼️</span>
+                <h2>Background Wallpaper</h2>
               </div>
 
-              <form id="weatherSettingsForm" class="settings-form">
+              <form id="backgroundSettingsForm" class="settings-form">
                 <div class="form-group">
-                  <label for="settingWeatherApiKey">OpenWeatherMap API Key</label>
-                  <input type="password" id="settingWeatherApiKey" placeholder="Enter API Key" />
+                  <label for="settingBackgroundType">Wallpaper Mode</label>
+                  <select id="settingBackgroundType">
+                    <option value="none">Default (None)</option>
+                    <option value="custom">Custom Wallpaper</option>
+                  </select>
                 </div>
+
+                <div id="customBackgroundOptions" class="hidden">
+                  <!-- File Upload -->
+                  <div class="form-group">
+                    <label>Upload Local Image</label>
+                    <div style="display: flex; gap: 8px; margin-top: 4px">
+                      <button type="button" id="uploadBackgroundBtn" class="btn btn-secondary w-full">
+                        <span>📁 Choose File</span>
+                      </button>
+                      <input
+                        type="file"
+                        id="backgroundFileInput"
+                        accept="image/png, image/jpeg, image/jpg"
+                        class="hidden"
+                      />
+                      <button
+                        type="button"
+                        id="clearBackgroundBtn"
+                        class="btn btn-danger hidden"
+                        title="Clear Wallpaper"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                    <p class="form-input-hint">Supports PNG, JPG, or JPEG. Auto-optimized.</p>
+                  </div>
+
+                  <!-- OR Divider -->
+                  <div
+                    style="
+                      text-align: center;
+                      margin: 8px 0;
+                      color: var(--text-secondary);
+                      font-size: 12px;
+                      font-weight: 600;
+                    "
+                  >
+                    — OR —
+                  </div>
+
+                  <!-- URL Input -->
+                  <div class="form-group">
+                    <label for="settingBackgroundUrl">Import from URL</label>
+                    <div style="display: flex; gap: 8px">
+                      <input type="url" id="settingBackgroundUrl" placeholder="https://example.com/image.jpg" />
+                      <button type="button" id="importBackgroundUrlBtn" class="btn btn-secondary">Import</button>
+                    </div>
+                  </div>
+
+                  <!-- Wallpaper Preview -->
+                  <div class="form-group">
+                    <label>Active Wallpaper Preview</label>
+                    <div id="backgroundPreviewContainer" class="background-preview-box">
+                      <span id="backgroundPreviewPlaceholder">No Custom Wallpaper Active</span>
+                      <img id="backgroundPreviewImg" class="hidden" alt="Background Preview" />
+                    </div>
+                  </div>
+                </div>
+
                 <div class="settings-form-actions">
-                  <button type="submit" class="btn btn-primary w-full">Save API Key</button>
+                  <button type="submit" class="btn btn-primary w-full">Apply Wallpaper Mode</button>
                 </div>
               </form>
             </div>
@@ -534,6 +653,10 @@
                     <option value="50">50 Tasks</option>
                     <option value="all">Show All (No Pagination)</option>
                   </select>
+                </div>
+                <div class="form-group">
+                  <label for="settingWeatherApiKey">OpenWeatherMap API Key</label>
+                  <input type="password" id="settingWeatherApiKey" placeholder="Enter API Key" />
                 </div>
                 <div class="settings-form-actions">
                   <button type="submit" class="btn btn-primary w-full">Save Settings</button>
@@ -963,6 +1086,24 @@
       </div>
       <div class="print-footer">
         <p>Generated by HomeBoard. Shopping made simple!</p>
+      </div>
+    </div>
+
+    <!-- Lock Screen / Authentication Overlay -->
+    <div id="lockScreen" class="lock-screen hidden">
+      <div class="lock-card" id="lockCard">
+        <div class="lock-logo">
+          <span class="lock-icon">🏠</span>
+          <h1 class="lock-title">HomeBoard</h1>
+        </div>
+        <p class="lock-subtitle">This dashboard is password protected.</p>
+        <form id="lockForm" class="lock-form">
+          <div class="lock-input-group">
+            <input type="password" id="lockPasswordInput" placeholder="Enter password..." required />
+            <button type="submit" class="btn btn-primary" id="lockUnlockBtn">Unlock</button>
+          </div>
+          <p id="lockErrorMsg" class="lock-error-msg hidden">Incorrect password. Please try again.</p>
+        </form>
       </div>
     </div>
 

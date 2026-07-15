@@ -18,7 +18,7 @@ function authMiddleware(req, res, next) {
     const savedPassword = (settings.app_password || '').trim();
 
     if (isEnabled && savedPassword) {
-      const clientPassword = req.headers['x-app-password'] || '';
+      const clientPassword = req.headers['x-app-password'] || req.query.pw || '';
       if (clientPassword !== savedPassword) {
         return res.status(401).json({ error: 'Authentication required' });
       }

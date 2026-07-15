@@ -10,12 +10,9 @@ async function customFetch(url, options = {}) {
     if (url.includes('/api/settings/auth-status') || url.includes('/api/settings/authenticate')) {
       return res;
     }
-    const password = window.prompt('Access Protected. Please enter password:');
-    if (password !== null) {
-      localStorage.setItem('app_password', password.trim());
-      options.headers['x-app-password'] = password.trim();
-      res = await fetch(url, options); // Retry request
-    }
+    // If we receive a 401, clear local credentials and reload to trigger the Lock Screen
+    localStorage.removeItem('app_password');
+    window.location.reload();
   }
   return res;
 }
@@ -304,6 +301,35 @@ export const api = {
       const err = await res.json();
       throw new Error(err.error || 'Failed to set home weather location');
     }
+    return res.json();
+  },
+
+  async uploadBackground(image) {
+    const res = await customFetch('/api/settings/background', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image })
+    });
+    if (!res.ok) throw new Error('Failed to upload background image');
+    return res.json();
+  },
+
+  async fetchExternalBackground(url) {
+    const res = await customFetch('/api/settings/background/fetch-external', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to import background URL');
+    }
+    return res.json();
+  },
+
+  async deleteBackground() {
+    const res = await customFetch('/api/settings/background', { method: 'DELETE' });
+    if (!res.ok) throw new Error('Failed to delete background');
     return res.json();
   }
 };
