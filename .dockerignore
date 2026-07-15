@@ -1,0 +1,11 @@
+node_modules
+data/
+*.db
+.git
+.github
+.gitignore
+README.md
+codebase_scan_*.html
+FINAL_FIXES.md
+FIXES.md
+task.md

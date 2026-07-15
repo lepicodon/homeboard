@@ -1,0 +1,972 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HomeBoard - Family Management</title>
+    <meta
+      name="description"
+      content="A lightweight, modern, responsive family task tracker. Organize your household chores."
+    />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      // Inline script to prevent FOUC (Flash of Unstyled Content)
+      {
+        const colorScheme = localStorage.getItem('color-scheme') || 'system';
+        document.documentElement.setAttribute('data-theme', colorScheme);
+        if (colorScheme !== 'system') {
+          document.querySelector('meta[name="color-scheme"]').content = colorScheme;
+        }
+      }
+    </script>
+    <!-- CSS Stylesheets -->
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <!-- Web Application Layout -->
+    <div class="app-container">
+      <!-- Sidebar Navigation -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <div class="logo">
+            <span class="logo-icon">🏠</span>
+            <span class="logo-text">HomeBoard</span>
+          </div>
+          <!-- Sidebar Weather Quick Widget -->
+          <div id="sidebarWeatherWidget" class="sidebar-weather-widget">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="#tasks" class="nav-item active" id="navTasks">
+            <span class="nav-icon">📋</span>
+            <span class="nav-label">Tasks</span>
+          </a>
+          <a href="#calendar" class="nav-item" id="navCalendar">
+            <span class="nav-icon">📅</span>
+            <span class="nav-label">Calendar</span>
+          </a>
+          <a href="#memos" class="nav-item" id="navMemos">
+            <span class="nav-icon">📌</span>
+            <span class="nav-label">Memos</span>
+          </a>
+          <a href="#shopping" class="nav-item" id="navShopping">
+            <span class="nav-icon">🛒</span>
+            <span class="nav-label">Shopping</span>
+          </a>
+          <a href="#weather" class="nav-item" id="navWeather">
+            <span class="nav-icon">🌤️</span>
+            <span class="nav-label">Weather</span>
+          </a>
+          <a href="#settings" class="nav-item" id="navSettings">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Settings</span>
+          </a>
+        </nav>
+
+        <!-- Sidebar Stats Panel -->
+        <div class="sidebar-stats">
+          <div class="stats-title">Today's Progress</div>
+          <div class="stats-bar-container">
+            <div class="stats-bar" id="progressBar" style="width: 0%"></div>
+          </div>
+          <div class="stats-text" id="progressText">0 of 0 tasks completed</div>
+        </div>
+
+        <!-- Theme Switcher & Footer -->
+        <div class="sidebar-footer">
+          <button id="themeToggle" class="theme-toggle-btn" aria-label="Toggle dark/light theme">
+            <span class="theme-icon">🌙</span>
+            <span class="theme-label">Dark Mode</span>
+          </button>
+          <button id="logoutBtn" class="logout-btn hidden" aria-label="Lock / Logout from Dashboard">
+            <span class="logout-icon">🔒</span>
+            <span class="logout-label">Lock Dashboard</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content">
+        <!-- Tasks Page Panel -->
+        <section id="tasksPage" class="page-panel active">
+          <header class="page-header">
+            <div class="header-titles">
+              <h1 id="greeting">Welcome Home!</h1>
+              <p class="header-subtitle" id="currentDate">Sunday, July 12</p>
+            </div>
+
+            <div class="header-actions">
+              <!-- View Switcher -->
+              <div class="view-switcher-group">
+                <button id="viewGridBtn" class="btn-view active" title="Grid View">⊞</button>
+                <button id="viewListBtn" class="btn-view" title="List View">☰</button>
+              </div>
+
+              <button id="printBtn" class="btn btn-secondary btn-icon-text">
+                <span class="btn-icon">🖨️</span>
+                <span>Print Checklist</span>
+              </button>
+              <button id="addTaskBtn" class="btn btn-primary btn-icon-text">
+                <span class="btn-icon">➕</span>
+                <span>Add Task</span>
+              </button>
+            </div>
+          </header>
+
+          <!-- Filters and Search Bar (Optimised layout for single row) -->
+          <div class="filters-card">
+            <div class="filters-row">
+              <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="searchInput" placeholder="Search tasks by title or description..." />
+              </div>
+
+              <div class="filter-group">
+                <label for="filterStatus">Status</label>
+                <select id="filterStatus">
+                  <option value="all">All Statuses</option>
+                  <option value="pending" selected>Pending</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="filterCategory">Category</label>
+                <select id="filterCategory">
+                  <option value="all">All Categories</option>
+                  <!-- Dynamically populated -->
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="filterSize">Size</label>
+                <select id="filterSize">
+                  <option value="all">All Sizes</option>
+                  <option value="small">Small</option>
+                  <option value="medium">Medium</option>
+                  <option value="big">Big</option>
+                </select>
+              </div>
+
+              <div class="filter-group">
+                <label for="filterAssignee">Assignee</label>
+                <select id="filterAssignee">
+                  <option value="all">All Assignees</option>
+                  <option value="unassigned">Unassigned</option>
+                  <option value="other">Other</option>
+                  <!-- Dynamically populated members -->
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Task Cards Display -->
+          <div class="tasks-container">
+            <div id="tasksGrid" class="tasks-grid grid-view">
+              <!-- Dynamically populated grid or list cards -->
+            </div>
+
+            <!-- Tasks Pagination Controls -->
+            <div id="tasksPagination" class="pagination-container hidden">
+              <button id="prevPageBtn" class="btn btn-secondary btn-sm" disabled>◀ Prev</button>
+              <span id="paginationInfo" class="pagination-info">Page 1 of 1</span>
+              <button id="nextPageBtn" class="btn btn-secondary btn-sm" disabled>Next ▶</button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+              <div class="empty-icon">🎉</div>
+              <h3 class="empty-title">All caught up!</h3>
+              <p class="empty-text">No tasks found matching your filters. Sit back and relax or add a new task.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- Calendar Page Panel -->
+        <section id="calendarPage" class="page-panel">
+          <header class="page-header">
+            <div class="header-titles">
+              <h1>Calendar</h1>
+              <p class="header-subtitle">Chores and tasks with deadlines</p>
+            </div>
+            <div class="header-actions">
+              <button id="calTodayBtn" class="btn btn-secondary">Today</button>
+              <div class="cal-nav-group">
+                <button id="calPrevBtn" class="btn btn-secondary">◀</button>
+                <span id="calMonthYearLabel" class="cal-month-year-label">July 2026</span>
+                <button id="calNextBtn" class="btn btn-secondary">▶</button>
+              </div>
+            </div>
+          </header>
+
+          <div class="calendar-card">
+            <div class="calendar-weekdays">
+              <div>Sun</div>
+              <div>Mon</div>
+              <div>Tue</div>
+              <div>Wed</div>
+              <div>Thu</div>
+              <div>Fri</div>
+              <div>Sat</div>
+            </div>
+            <div id="calendarGrid" class="calendar-grid">
+              <!-- Dynamically populated monthly cells -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Memos Page Panel -->
+        <section id="memosPage" class="page-panel">
+          <header class="page-header">
+            <div class="header-titles">
+              <h1>Memo Board</h1>
+              <p class="header-subtitle">Post quick updates and virtual sticky notes</p>
+            </div>
+            <div class="header-actions">
+              <button id="addMemoBtn" class="btn btn-primary btn-icon-text">
+                <span class="btn-icon">📌</span>
+                <span>Add Memo</span>
+              </button>
+            </div>
+          </header>
+
+          <!-- Board -->
+          <div id="memosBoard" class="memos-board">
+            <!-- Dynamically populated sticky notes -->
+          </div>
+
+          <!-- Empty State -->
+          <div id="memosEmptyState" class="empty-state hidden">
+            <div class="empty-icon">📝</div>
+            <h3 class="empty-title">Board is empty!</h3>
+            <p class="empty-text">Click "Add Memo" to post the first note on the board.</p>
+          </div>
+        </section>
+
+        <!-- Shopping Page Panel -->
+        <section id="shoppingPage" class="page-panel">
+          <header class="page-header">
+            <div class="header-titles">
+              <div class="shopping-title-row">
+                <h1>Shopping List</h1>
+                <div class="shopping-list-controls">
+                  <div class="select-wrapper">
+                    <select id="shoppingListSelector" class="select-sm">
+                      <!-- Dynamically populated -->
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-icon-sm"
+                    id="addShoppingListBtn"
+                    title="Create New List"
+                  >
+                    ➕
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-icon-sm"
+                    id="deleteShoppingListBtn"
+                    title="Delete Active List"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              <p class="header-subtitle">Shared household grocery lists</p>
+            </div>
+            <div class="header-actions">
+              <!-- Sort shopping list option -->
+              <div class="sort-shopping-wrapper">
+                <label for="sortShopping">Sort By</label>
+                <select id="sortShopping" class="btn-secondary select-sm">
+                  <option value="category" selected>Category</option>
+                  <option value="name">Name</option>
+                </select>
+              </div>
+
+              <button id="printShoppingBtn" class="btn btn-secondary btn-icon-text">
+                <span class="btn-icon">🖨️</span>
+                <span>Print List</span>
+              </button>
+              <button id="clearCompletedShoppingBtn" class="btn btn-secondary btn-icon-text">
+                <span class="btn-icon">🧹</span>
+                <span>Clear Checked</span>
+              </button>
+            </div>
+          </header>
+
+          <div class="shopping-layout">
+            <!-- Add Item form card -->
+            <div class="shopping-form-card">
+              <div class="card-header">
+                <span class="card-header-icon">🛒</span>
+                <h2>Add Item</h2>
+              </div>
+              <form id="addShoppingItemForm" class="settings-form" autocomplete="off">
+                <div class="form-group">
+                  <label for="shoppingItemName">Item Name*</label>
+                  <input
+                    type="text"
+                    id="shoppingItemName"
+                    required
+                    placeholder="e.g. Milk, Bananas, Bread"
+                    autocomplete="off"
+                  />
+                </div>
+                <div class="form-group">
+                  <label for="shoppingItemQuantity">Quantity / Size</label>
+                  <input type="text" id="shoppingItemQuantity" placeholder="e.g. 2 packs, 1 gal" autocomplete="off" />
+                </div>
+                <div class="form-group">
+                  <label for="shoppingItemCategory">Category</label>
+                  <select id="shoppingItemCategory">
+                    <!-- Dynamically populated -->
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary w-full">Add to List</button>
+              </form>
+            </div>
+
+            <!-- Categories checklist card -->
+            <div class="shopping-list-card">
+              <div id="shoppingListContainer" class="shopping-list-container">
+                <!-- Dynamically populated categories with checkboxes -->
+              </div>
+
+              <div id="shoppingEmptyState" class="empty-state hidden">
+                <div class="empty-icon">🥬</div>
+                <h3 class="empty-title">All stocked up!</h3>
+                <p class="empty-text">No items on the shopping list. Add items on the left panel to populate it.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Weather Page Panel -->
+        <section id="weatherPage" class="page-panel">
+          <header class="page-header">
+            <div class="header-titles">
+              <div class="shopping-title-row">
+                <h1 id="weatherLocationName">Weather</h1>
+                <div class="shopping-list-controls" id="weatherLocationControls">
+                  <div class="select-wrapper">
+                    <select id="weatherLocationSelector" class="select-sm">
+                      <!-- Dynamically populated -->
+                    </select>
+                  </div>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-icon-sm"
+                    id="addWeatherLocationBtn"
+                    title="Add New Location"
+                  >
+                    ➕
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-icon-sm"
+                    id="setHomeWeatherLocationBtn"
+                    title="Set as Home Location"
+                  >
+                    🏠
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger btn-icon-sm"
+                    id="deleteWeatherLocationBtn"
+                    title="Delete Active Location"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+              <p class="header-subtitle" id="weatherUpdateTime">Current conditions and 5-day forecast</p>
+            </div>
+          </header>
+
+          <div id="weatherDashboard" class="weather-dashboard hidden">
+            <!-- Current weather big card -->
+            <div class="weather-current-card">
+              <div class="weather-current-main">
+                <div class="weather-large-temp"><span id="weatherTemp">--</span><span class="temp-unit">°C</span></div>
+                <div class="weather-large-desc">
+                  <div class="weather-main-icon" id="weatherIcon">☀️</div>
+                  <div id="weatherDesc">Clear Sky</div>
+                </div>
+              </div>
+              <div class="weather-details-grid">
+                <div class="weather-detail-item">
+                  <span class="detail-label">🌡️ Feels Like</span>
+                  <span class="detail-value" id="weatherFeelsLike">--</span>
+                </div>
+                <div class="weather-detail-item">
+                  <span class="detail-label">💨 Wind</span>
+                  <span class="detail-value" id="weatherWind">--</span>
+                </div>
+                <div class="weather-detail-item">
+                  <span class="detail-label">💧 Humidity</span>
+                  <span class="detail-value" id="weatherHumidity">--</span>
+                </div>
+                <div class="weather-detail-item">
+                  <span class="detail-label">🌅 Sun Cycle</span>
+                  <span class="detail-value" id="weatherSunCycle">--</span>
+                </div>
+                <div class="weather-detail-item">
+                  <span class="detail-label">☁️ Clouds</span>
+                  <span class="detail-value" id="weatherClouds">--</span>
+                </div>
+                <div class="weather-detail-item">
+                  <span class="detail-label">🧭 Pressure</span>
+                  <span class="detail-value" id="weatherPressure">--</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Hourly Forecast Card -->
+            <div class="weather-forecast-card">
+              <h2>24-Hour Timeline</h2>
+              <div id="weatherHourlyTimeline" class="weather-hourly-timeline">
+                <!-- Dynamically populated hourly slots -->
+              </div>
+            </div>
+
+            <!-- 5-Day Forecast Grid -->
+            <div class="weather-forecast-card">
+              <h2>5-Day Forecast</h2>
+              <div id="weatherForecastGrid" class="weather-forecast-grid">
+                <!-- Dynamically populated 5 columns -->
+              </div>
+            </div>
+          </div>
+
+          <div id="weatherUnconfiguredState" class="empty-state">
+            <div class="empty-icon">🌤️</div>
+            <h3 class="empty-title">Weather is not configured</h3>
+            <p class="empty-text">
+              Enter your OpenWeatherMap API key and city location in the Settings page to view forecast details.
+            </p>
+            <button id="goToWeatherSettingsBtn" class="btn btn-primary" style="margin-top: 16px">
+              Configure Settings
+            </button>
+          </div>
+        </section>
+
+        <!-- Settings Page Panel -->
+        <section id="settingsPage" class="page-panel">
+          <header class="page-header">
+            <div class="header-titles">
+              <h1>Settings</h1>
+              <p class="header-subtitle">Manage family members, categories and lists</p>
+            </div>
+          </header>
+
+          <div class="settings-grid settings-row">
+            <!-- Weather Settings card -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="card-header-icon">🌤️</span>
+                <h2>Weather Settings</h2>
+              </div>
+
+              <form id="weatherSettingsForm" class="settings-form">
+                <div class="form-group">
+                  <label for="settingWeatherApiKey">OpenWeatherMap API Key</label>
+                  <input type="password" id="settingWeatherApiKey" placeholder="Enter API Key" />
+                </div>
+                <div class="settings-form-actions">
+                  <button type="submit" class="btn btn-primary w-full">Save API Key</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- Password Protection Settings card -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="card-header-icon">🔒</span>
+                <h2>Security Settings</h2>
+              </div>
+
+              <form id="passwordSettingsForm" class="settings-form">
+                <div
+                  class="form-group"
+                  style="display: flex; flex-direction: row; align-items: center; gap: 8px; margin-bottom: 12px"
+                >
+                  <input
+                    type="checkbox"
+                    id="settingPasswordEnabled"
+                    style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
+                  />
+                  <label for="settingPasswordEnabled" style="margin-bottom: 0; cursor: pointer; font-weight: 500"
+                    >Enable Password Protection</label
+                  >
+                </div>
+                <div class="form-group">
+                  <label for="settingAppPassword">Access Password</label>
+                  <input type="password" id="settingAppPassword" placeholder="Enter Password" />
+                </div>
+                <div class="settings-form-actions">
+                  <button type="submit" class="btn btn-primary w-full">Save Password Settings</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- System Settings card -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="card-header-icon">⚙️</span>
+                <h2>System Settings</h2>
+              </div>
+
+              <form id="systemSettingsForm" class="settings-form">
+                <div class="form-group">
+                  <label for="settingAppTitle">App Name / Title</label>
+                  <input type="text" id="settingAppTitle" required placeholder="e.g. HomeBoard, Smith Household" />
+                </div>
+                <div class="form-group">
+                  <label for="settingTasksPerPage">Tasks Per Page</label>
+                  <select id="settingTasksPerPage">
+                    <option value="5">5 Tasks</option>
+                    <option value="10" selected>10 Tasks</option>
+                    <option value="20">20 Tasks</option>
+                    <option value="50">50 Tasks</option>
+                    <option value="all">Show All (No Pagination)</option>
+                  </select>
+                </div>
+                <div class="settings-form-actions">
+                  <button type="submit" class="btn btn-primary w-full">Save Settings</button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <div class="settings-grid settings-row">
+            <!-- Family Members card -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="card-header-icon">👥</span>
+                <h2 id="memberFormTitle">Family Members</h2>
+              </div>
+
+              <form id="addMemberForm" class="settings-form">
+                <input type="hidden" id="memberIdField" />
+
+                <!-- Avatar Upload Block -->
+                <div class="avatar-upload-container">
+                  <div class="avatar-upload-preview" id="avatarPreviewContainer">
+                    <span id="avatarPlaceholder">?</span>
+                    <img id="avatarImage" class="hidden" alt="Profile Preview" />
+                  </div>
+                  <div class="avatar-upload-actions">
+                    <button type="button" id="uploadAvatarBtn" class="btn btn-secondary btn-icon-text">
+                      <span>📷</span>
+                      <span>Upload Photo</span>
+                    </button>
+                    <input type="file" id="memberAvatar" accept="image/*" class="hidden" />
+                    <button
+                      type="button"
+                      id="removeAvatarBtn"
+                      class="btn btn-danger btn-icon hidden"
+                      title="Remove Photo"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group flex-grow">
+                    <label for="memberName">Member Name</label>
+                    <input type="text" id="memberName" required placeholder="e.g. Alice, Bob" />
+                  </div>
+                  <div class="form-group">
+                    <label for="memberColor">Color</label>
+                    <div class="color-picker-wrapper">
+                      <input type="color" id="memberColor" value="#3b82f6" />
+                    </div>
+                  </div>
+                </div>
+
+                <div class="settings-form-actions">
+                  <button type="submit" id="memberFormSubmitBtn" class="btn btn-primary flex-grow">
+                    Add Family Member
+                  </button>
+                  <button type="button" id="cancelMemberEditBtn" class="btn btn-secondary hidden">Cancel</button>
+                </div>
+              </form>
+
+              <div class="settings-list-container">
+                <h3>Existing Members</h3>
+                <ul id="membersList" class="settings-list">
+                  <!-- Dynamically populated -->
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <!-- Task Categories card -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="card-header-icon">🏷️</span>
+                <h2 id="categoryFormTitle">Task Categories</h2>
+              </div>
+
+              <form id="addCategoryForm" class="settings-form">
+                <input type="hidden" id="categoryIdField" />
+                <div class="form-row">
+                  <div class="form-group flex-grow">
+                    <label for="categoryName">Category Name</label>
+                    <input type="text" id="categoryName" required placeholder="e.g. Garden, Homework" />
+                  </div>
+                  <div class="form-group">
+                    <label for="categoryColor">Color</label>
+                    <div class="color-picker-wrapper">
+                      <input type="color" id="categoryColor" value="#10b981" />
+                    </div>
+                  </div>
+                </div>
+                <div class="settings-form-actions">
+                  <button type="submit" id="categoryFormSubmitBtn" class="btn btn-primary flex-grow">
+                    Add Category
+                  </button>
+                  <button type="button" id="cancelCategoryEditBtn" class="btn btn-secondary hidden">Cancel</button>
+                </div>
+              </form>
+
+              <div class="settings-list-container">
+                <h3>Existing Categories</h3>
+                <ul id="categoriesList" class="settings-list">
+                  <!-- Dynamically populated -->
+                </ul>
+              </div>
+            </div>
+
+            <!-- Shopping Categories card -->
+            <div class="settings-card">
+              <div class="card-header">
+                <span class="card-header-icon">🛒</span>
+                <h2 id="shoppingCategoryFormTitle">Shopping Categories</h2>
+              </div>
+
+              <form id="addShoppingCategoryForm" class="settings-form">
+                <input type="hidden" id="shoppingCategoryIdField" />
+                <div class="form-row">
+                  <div class="form-group flex-grow">
+                    <label for="shoppingCategoryName">Category Name</label>
+                    <input type="text" id="shoppingCategoryName" required placeholder="e.g. Toiletries, Snacks" />
+                  </div>
+                </div>
+                <div class="settings-form-actions">
+                  <button type="submit" id="shoppingCategoryFormSubmitBtn" class="btn btn-primary flex-grow">
+                    Add Category
+                  </button>
+                  <button type="button" id="cancelShoppingCategoryEditBtn" class="btn btn-secondary hidden">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+
+              <div class="settings-list-container">
+                <h3>Existing Categories</h3>
+                <ul id="shoppingCategoriesList" class="settings-list">
+                  <!-- Dynamically populated -->
+                </ul>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Dialog Modals -->
+
+    <!-- Task Form Modal -->
+    <dialog id="taskModal" closedby="any" aria-labelledby="taskModalTitle">
+      <div class="modal-wrapper">
+        <header class="modal-header">
+          <h2 id="taskModalTitle">Add New Task</h2>
+          <button type="button" class="close-modal-btn" id="closeTaskModalBtn" aria-label="Close dialog">✕</button>
+        </header>
+
+        <form id="taskForm" class="modal-form">
+          <input type="hidden" id="taskIdField" />
+
+          <div class="form-group">
+            <label for="taskTitle">Task Title*</label>
+            <input type="text" id="taskTitle" required placeholder="What needs to be done?" />
+          </div>
+
+          <div class="form-group">
+            <label for="taskDescription">Description</label>
+            <textarea id="taskDescription" rows="3" placeholder="Add some details..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-grow">
+              <label>Task Size*</label>
+              <div class="size-selector">
+                <label class="size-option small">
+                  <input type="radio" name="taskSize" value="small" checked />
+                  <span class="size-pill">🟢 Small</span>
+                </label>
+                <label class="size-option medium">
+                  <input type="radio" name="taskSize" value="medium" />
+                  <span class="size-pill">🟡 Medium</span>
+                </label>
+                <label class="size-option big">
+                  <input type="radio" name="taskSize" value="big" />
+                  <span class="size-pill">🔴 Big</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="taskCategory">Category</label>
+              <select id="taskCategory">
+                <option value="">-- Select Category --</option>
+                <!-- Dynamically populated -->
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-grow">
+              <label for="taskAssignedType">Assign To*</label>
+              <select id="taskAssignedType">
+                <option value="unassigned">❔ Unassigned</option>
+                <option value="other">👤 Other / External</option>
+                <option value="members">👨‍👩‍👧‍👦 Family Members</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="taskDeadline">Deadline</label>
+              <input type="date" id="taskDeadline" />
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-grow">
+              <label for="taskRecurrence">Recurrence*</label>
+              <select id="taskRecurrence">
+                <option value="none">None (Single Chore)</option>
+                <option value="weekly">Weekly</option>
+                <option value="bi-weekly">Bi-weekly</option>
+                <option value="monthly">Monthly</option>
+                <option value="quarterly">Quarterly</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Conditional Other Assignee input -->
+          <div id="otherAssigneeGroup" class="form-group hidden animate-fade-in">
+            <label for="taskOtherAssignee">Other Assignee's Name / Service</label>
+            <input type="text" id="taskOtherAssignee" placeholder="e.g. Plumber, Guest, School" />
+          </div>
+
+          <!-- Conditional Family Members multi-checkbox list -->
+          <div id="familyAssigneeGroup" class="form-group hidden animate-fade-in">
+            <label>Select Family Member(s)</label>
+            <div id="familyCheckboxList" class="family-checkbox-list">
+              <!-- Dynamically populated checkboxes -->
+            </div>
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelTaskModalBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="saveTaskBtn">Save Task</button>
+          </footer>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Memo Form Modal (With expanded color options & optional event dates) -->
+    <dialog id="memoModal" closedby="any" aria-labelledby="memoModalTitle">
+      <div class="modal-wrapper">
+        <header class="modal-header">
+          <h2 id="memoModalTitle">Add Sticky Note</h2>
+          <button type="button" class="close-modal-btn" id="closeMemoModalBtn" aria-label="Close dialog">✕</button>
+        </header>
+
+        <form id="memoForm" class="modal-form">
+          <input type="hidden" id="memoIdField" />
+
+          <div class="form-group">
+            <label for="memoContent">Message*</label>
+            <textarea id="memoContent" rows="4" required placeholder="Write something on the board..."></textarea>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group flex-grow">
+              <label for="memoEventDate">Event Date (Optional, links to calendar)</label>
+              <input type="date" id="memoEventDate" />
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>Sticky Note Color</label>
+            <div class="memo-color-selector">
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#fef08a" checked />
+                <span class="memo-color-dot" style="background-color: #fef08a" title="Yellow"></span>
+              </label>
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#fbcfe8" />
+                <span class="memo-color-dot" style="background-color: #fbcfe8" title="Pink"></span>
+              </label>
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#bbf7d0" />
+                <span class="memo-color-dot" style="background-color: #bbf7d0" title="Green"></span>
+              </label>
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#bfdbfe" />
+                <span class="memo-color-dot" style="background-color: #bfdbfe" title="Blue"></span>
+              </label>
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#e9d5ff" />
+                <span class="memo-color-dot" style="background-color: #e9d5ff" title="Lavender"></span>
+              </label>
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#fed7aa" />
+                <span class="memo-color-dot" style="background-color: #fed7aa" title="Peach"></span>
+              </label>
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#99f6e4" />
+                <span class="memo-color-dot" style="background-color: #99f6e4" title="Teal"></span>
+              </label>
+              <label class="memo-color-option">
+                <input type="radio" name="memoColor" value="#e2e8f0" />
+                <span class="memo-color-dot" style="background-color: #e2e8f0" title="Paper"></span>
+              </label>
+            </div>
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelMemoModalBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary" id="saveMemoBtn">Save Note</button>
+          </footer>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Delete Confirmation Modal -->
+    <dialog id="deleteConfirmModal" closedby="any" aria-labelledby="deleteModalTitle">
+      <div class="modal-wrapper">
+        <header class="modal-header">
+          <h2 id="deleteModalTitle">Delete Item</h2>
+          <button type="button" class="close-modal-btn" id="closeDeleteModalBtn" aria-label="Close dialog">✕</button>
+        </header>
+
+        <div class="modal-body">
+          <p id="deleteMessage">Are you sure you want to delete this item? This action cannot be undone.</p>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+        </footer>
+      </div>
+    </dialog>
+
+    <!-- Add Shopping List Modal -->
+    <dialog id="shoppingListModal" closedby="any" aria-labelledby="shoppingListModalTitle">
+      <div class="modal-wrapper">
+        <header class="modal-header">
+          <h2 id="shoppingListModalTitle">Create Shopping List</h2>
+          <button type="button" class="close-modal-btn" id="closeShoppingListModalBtn" aria-label="Close dialog">
+            ✕
+          </button>
+        </header>
+
+        <form id="shoppingListForm" class="modal-form">
+          <div class="form-group">
+            <label for="newShoppingListName">List Name*</label>
+            <input
+              type="text"
+              id="newShoppingListName"
+              required
+              placeholder="e.g. Costco, Trader Joe's, Sunday Dinner"
+            />
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelShoppingListModalBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Create List</button>
+          </footer>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Add Weather Location Modal -->
+    <dialog id="weatherLocationModal" closedby="any" aria-labelledby="weatherLocationModalTitle">
+      <div class="modal-wrapper">
+        <header class="modal-header">
+          <h2 id="weatherLocationModalTitle">Add Weather Location</h2>
+          <button type="button" class="close-modal-btn" id="closeWeatherLocationModalBtn" aria-label="Close dialog">
+            ✕
+          </button>
+        </header>
+
+        <form id="weatherLocationForm" class="modal-form">
+          <div class="form-group">
+            <label for="newWeatherLocationName">City Name*</label>
+            <input type="text" id="newWeatherLocationName" required placeholder="e.g. London, New York, Tokyo" />
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelWeatherLocationModalBtn">Cancel</button>
+            <button type="submit" class="btn btn-primary">Add Location</button>
+          </footer>
+        </form>
+      </div>
+    </dialog>
+
+    <!-- Print-Friendly Tasks Output -->
+    <div id="printContainer" class="print-only">
+      <div class="print-header">
+        <h1>🏠 HomeBoard - Chores & Task List</h1>
+        <p id="printDate"></p>
+      </div>
+
+      <table class="print-table">
+        <thead>
+          <tr>
+            <th style="width: 5%">Done</th>
+            <th style="width: 45%">Task / Description</th>
+            <th style="width: 15%">Category</th>
+            <th style="width: 10%">Size</th>
+            <th style="width: 15%">Assignee</th>
+            <th style="width: 10%">Deadline</th>
+          </tr>
+        </thead>
+        <tbody id="printTableBody">
+          <!-- Dynamically populated before print -->
+        </tbody>
+      </table>
+
+      <div class="print-footer">
+        <p>Generated by HomeBoard. Get things done together!</p>
+      </div>
+    </div>
+
+    <!-- Print-Friendly Shopping Output -->
+    <div id="printShoppingContainer" class="print-only">
+      <div class="print-header">
+        <h1>🛒 HomeBoard - Grocery & Shopping List</h1>
+        <p id="printShoppingDate"></p>
+      </div>
+      <div id="printShoppingBody">
+        <!-- Dynamically generated print list -->
+      </div>
+      <div class="print-footer">
+        <p>Generated by HomeBoard. Shopping made simple!</p>
+      </div>
+    </div>
+
+    <!-- Client-side script -->
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>

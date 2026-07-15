@@ -1,0 +1,35 @@
+{
+  "name": "home-todo",
+  "version": "1.0.0",
+  "description": "Simple family task tracker app with SQLite and Docker",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "nodemon server.js",
+    "lint": "eslint . --max-warnings 0",
+    "format": "prettier --write .",
+    "test": "jest"
+  },
+  "keywords": [
+    "todo",
+    "family",
+    "sqlite",
+    "docker"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "better-sqlite3": "^11.8.0",
+    "compression": "^1.8.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0"
+  },
+  "devDependencies": {
+    "eslint": "^10.7.0",
+    "jest": "^30.4.2",
+    "nodemon": "^3.1.9",
+    "prettier": "^3.9.5",
+    "supertest": "^7.0.0"
+  }
+}
