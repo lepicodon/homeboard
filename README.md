@@ -1,6 +1,6 @@
-# 🏠 HomeTodo - Family Chores & Task Dashboard
+# 🏠 HomeBoard - Family Chores & Task Dashboard
 
-HomeTodo is a lightweight, responsive, and modern dashboard application built to organize household chores, share sticky note memos, and manage family shopping lists. It runs seamlessly on desktop, tablet, and mobile devices with full light/dark theme support.
+HomeBoard is a lightweight, responsive, and modern dashboard application built to organize household chores, share sticky note memos, and manage family shopping lists. It runs seamlessly on desktop, tablet, and mobile devices with full light/dark theme support.
 
 ---
 
@@ -8,8 +8,8 @@ HomeTodo is a lightweight, responsive, and modern dashboard application built to
 
 ### 📋 Task Management
 * **Flexible Sizing**: Classify chores as **Small** (green), **Medium** (amber), or **Big** (red).
-* **Assignees**: Assign tasks to multiple family members, unassigned, or external names/services.
-* **Recurrence Engine**: Support for **weekly, bi-weekly, monthly, or quarterly** chore recurrence. When completed, next occurrence is spawned automatically with advanced deadlines.
+* **Assignees**: Assign tasks to multiple family members, unassigned, or external names/services (e.g. plumber, guests).
+* **Recurrence Engine**: Support for **weekly, bi-weekly, monthly, or quarterly** chore recurrence. When completed, next occurrence is spawned automatically with advanced deadlines in transactional operations.
 
 ### 📅 Calendar Agenda View
 * **Desktop Grid**: Monthly calendar grid visualizing tasks and memos categorized by colors on deadline days.
@@ -19,9 +19,17 @@ HomeTodo is a lightweight, responsive, and modern dashboard application built to
 * **Visual Notes**: Fridge-board grid using colored pastel memos (8 colors available) randomly rotated for realism.
 * **Calendar Deadlines**: Memos can have optional dates linking them directly into calendar days as event notifications.
 
-### 🛒 Shared Shopping List
-* **Categorized Checkout**: Sort items by **Category** (Dairy, Produce, Pantry) or flat **Alphabetical Name**.
-* **Print Ready**: Dedicated styling layouts and print configurations for checklists.
+### 🛒 Shared Shopping Lists (Multi-List Support)
+* **Multiple Lists**: Create, name, select, and delete custom shopping lists (e.g., "Costco", "Weekly Groceries", "Home Depot"). The default list (General List) is protected and cannot be deleted.
+* **Categorized Checkout**: Group items by custom **Shopping Categories** (e.g. Produce, Dairy, Bakery) or sort alphabetically.
+* **Batch Operations**: Clear checked checklist items in one click specifically for the currently active list.
+* **Print Ready**: Dedicated print layouts to take your checklists with you.
+
+### 🌤️ Weather Dashboard (Multi-Location Support)
+* **Multi-City Configuration**: Register and manage multiple weather cities/locations inside the settings panel.
+* **Home Location**: Set a specific city as the default Home location to show on the main page loads.
+* **Interactive Switching**: Switch active weather forecasts instantly in the sidebar and main panel widgets.
+* **5-Day Forecasts**: Fetches both current temperature/conditions and 3-hour interval 5-day forecasts via OpenWeatherMap APIs.
 
 ### 🔒 Access & Security Protection
 * **Optional Password Authentication**: Enable username-free page locking directly from the settings panel. If enabled, the server enforces access validation and the client prompts for a passcode using a browser overlay.
@@ -30,7 +38,7 @@ HomeTodo is a lightweight, responsive, and modern dashboard application built to
 * **Settings Masking**: Confidential keys (like the OpenWeatherMap API key or access passwords) are masked (`******`) in transit and in developer tools.
 
 ### ⚡ Performance & Optimization
-* **Font Self-Hosting**: serve the Google Font `Outfit` locally from the repository to remove external render-blocking network requests.
+* **Font Self-Hosting**: Serve the Google Font `Outfit` locally from the repository to remove external render-blocking network requests.
 * **Static Assets Compression**: GZIP asset encoding (via `compression` middleware) and daily caching headers configured in the Express server.
 * **Weather Proxy Caching**: Weather API requests are cached in memory for 30 minutes to stay within external API rate limits.
 * **Database Indexing**: SQLite tables (tasks, members, shopping) use indexes on key query fields (completed, deadline, checked, list_id) for optimal performance.
@@ -108,29 +116,75 @@ home-todo/
 
 ---
 
-## 📡 API Overview
+## 📡 API Reference Overview
 
-* **Access Check**: `GET /api/settings/auth-status` | `POST /api/settings/authenticate`
-* **Tasks**: `GET`, `POST`, `PUT`, `DELETE` at `/api/tasks` | Toggle status at `PATCH /api/tasks/:id/toggle`
-* **Memos**: `GET`, `POST`, `PUT`, `DELETE` at `/api/memos`
-* **Shopping**: `GET`, `POST`, `PATCH`, `DELETE` at `/api/shopping` | Clear checked at `POST /api/shopping/clear-completed`
-* **Family Members**: `GET`, `POST`, `PUT`, `DELETE` at `/api/members`
-* **System Settings**: `GET`, `PUT` at `/api/settings`
-* **Weather Proxy**: `GET /api/weather` | Manage locations at `GET`, `POST`, `DELETE`, `PUT` at `/api/weather/locations`
+All API endpoints are prefixed with `/api` and are rate-limited. If Access Protection is active, they require the header `x-app-password` matching your configured password.
+
+### 🔒 Access Control
+* `GET /api/settings/auth-status` - Returns authentication status: `{ enabled: boolean, authenticated: boolean }`
+* `POST /api/settings/authenticate` - Verifies a password: `{ password: string }` ➡️ `{ success: boolean }`
+
+### 📋 Task Management
+* `GET /api/tasks` - Fetch all tasks
+* `POST /api/tasks` - Create a task
+* `PUT /api/tasks/:id` - Update details of a task
+* `DELETE /api/tasks/:id` - Delete a task
+* `PATCH /api/tasks/:id/toggle` - Toggle task completion status
+* `GET /api/categories` - Fetch task categories
+* `POST /api/categories` - Create a task category
+* `PUT /api/categories/:id` - Update a task category
+* `DELETE /api/categories/:id` - Delete a task category
+
+### 👥 Family Members
+* `GET /api/members` - Fetch family members
+* `POST /api/members` - Create a family member (supports profile picture base64 payload)
+* `PUT /api/members/:id` - Update a family member details
+* `DELETE /api/members/:id` - Delete a family member
+
+### 📌 Sticky Board Memos
+* `GET /api/memos` - Fetch all sticky note memos
+* `POST /api/memos` - Create a sticky board memo
+* `PUT /api/memos/:id` - Update a sticky board memo
+* `DELETE /api/memos/:id` - Delete a sticky board memo
+
+### 🛒 Shopping Lists & Items
+* `GET /api/shopping/lists` - Fetch all shopping lists
+* `POST /api/shopping/lists` - Create a new shopping list
+* `DELETE /api/shopping/lists/:id` - Delete a shopping list (protected for ID: 1)
+* `GET /api/shopping?list_id=X` - Fetch all checklist items inside shopping list ID `X`
+* `POST /api/shopping` - Add a checklist item inside a list (payload includes `list_id`)
+* `PATCH /api/shopping/:id/toggle` - Toggle checked state of a shopping item
+* `DELETE /api/shopping/:id` - Delete a shopping item
+* `POST /api/shopping/clear-completed?list_id=X` - Remove all checked items inside shopping list ID `X`
+* `GET /api/shopping/categories` - Fetch all shopping categories
+* `POST /api/shopping/categories` - Add a shopping category
+* `PUT /api/shopping/categories/:id` - Update a shopping category name
+* `DELETE /api/shopping/categories/:id` - Delete a shopping category
+
+### 🌤️ Weather Dashboard Locations
+* `GET /api/weather/locations` - Fetch all configured cities
+* `POST /api/weather/locations` - Add a new city
+* `DELETE /api/weather/locations/:id` - Delete a city
+* `PUT /api/weather/locations/:id/set-home` - Mark city ID as default home location
+* `GET /api/weather?location_id=X` - Proxies weather forecast query for location ID `X` (includes 30-minute memory cache)
+
+### ⚙️ System Settings
+* `GET /api/settings` - Fetch system settings (masks API key and App Password)
+* `PUT /api/settings` - Update settings (system name, tasks per page, weather API key, password credentials)
 
 ---
 
 ## 🧪 Development Commands
 
-* **Run Tests**: Execute the database and API test suite:
+* **Run Tests**: Execute the database unit tests and API integration supertests:
   ```bash
   npm test
   ```
-* **Lint Check**: Run style assertions:
+* **Lint Check**: Run ESLint style rules checker:
   ```bash
   npm run lint
   ```
-* **Code Formatter**: Reformat the code using Prettier rules:
+* **Code Formatter**: Format all files using Prettier standards:
   ```bash
   npm run format
   ```
