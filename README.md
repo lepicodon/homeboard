@@ -31,7 +31,7 @@ HomeBoard is a lightweight, responsive, and modern dashboard application built t
 
 ### 🌤️ Weather Dashboard (Multi-Location Support)
 
-- **Multi-City Configuration**: Register and manage multiple weather cities/locations inside the settings panel.
+- **Multi-City Configuration**: Register and manage multiple weather locations in the weather page, and configure the OpenWeatherMap API key in Settings.
 - **Home Location**: Set a specific city as the default Home location to show on the main page loads.
 - **Interactive Switching**: Switch active weather forecasts instantly in the sidebar and main panel widgets.
 - **5-Day Forecasts**: Fetches both current temperature/conditions and 3-hour interval 5-day forecasts via OpenWeatherMap APIs.

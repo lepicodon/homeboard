@@ -2,6 +2,7 @@ const express = require('express');
 const settingsRouter = express.Router();
 const weatherRouter = express.Router();
 const db = require('../config/db');
+const { URL } = require('url');
 
 // In-memory weather forecast cache (keyed by city name lowercase)
 const weatherCache = {};
@@ -173,6 +174,57 @@ settingsRouter.post('/background', (req, res) => {
   }
 });
 
+const dns = require('dns').promises;
+
+function isPrivateIP(ipAddress) {
+  if (!ipAddress || ipAddress === '::1' || ipAddress === '0.0.0.0') return true;
+  const parts = ipAddress.split('.');
+  if (parts.length === 4) {
+    const first = parseInt(parts[0], 10);
+    const second = parseInt(parts[1], 10);
+    if (first === 10) return true;
+    if (first === 127) return true;
+    if (first === 192 && second === 168) return true;
+    if (first === 169 && second === 254) return true;
+    if (first === 172 && second >= 16 && second <= 31) return true;
+  }
+  return false;
+}
+
+async function isSafeUrl(urlString) {
+  try {
+    const parsed = new URL(urlString);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return false;
+    }
+    const hostname = parsed.hostname;
+    if (hostname === 'localhost' || hostname.endsWith('.local') || hostname.endsWith('.internal')) {
+      return false;
+    }
+
+    let addresses = [];
+    try {
+      addresses = await dns.resolve(hostname);
+    } catch {
+      try {
+        const lookup = await dns.lookup(hostname);
+        addresses = [lookup.address];
+      } catch {
+        addresses = [hostname];
+      }
+    }
+
+    for (const addr of addresses) {
+      if (isPrivateIP(addr)) {
+        return false;
+      }
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 // POST proxy external image download
 settingsRouter.post('/background/fetch-external', async (req, res) => {
   const { url } = req.body;
@@ -180,6 +232,9 @@ settingsRouter.post('/background/fetch-external', async (req, res) => {
     return res.status(400).json({ error: 'URL is required.' });
   }
   try {
+    if (!(await isSafeUrl(url))) {
+      return res.status(400).json({ error: 'Restricted URL: Only public URLs are allowed.' });
+    }
     const imageRes = await fetch(url);
     if (!imageRes.ok) {
       throw new Error(`Failed to fetch image: HTTP ${imageRes.status}`);

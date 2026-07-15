@@ -465,20 +465,20 @@ export function initSystemSettingsEvents() {
       e.preventDefault();
       const settingAppTitle = document.getElementById('settingAppTitle');
       const settingTasksPerPage = document.getElementById('settingTasksPerPage');
-      const settingWeatherCity = document.getElementById('settingWeatherCity');
-      const settingWeatherApiKey = document.getElementById('settingWeatherApiKey');
 
       const app_title = settingAppTitle ? settingAppTitle.value.trim() : '';
       const tasks_per_page = settingTasksPerPage ? settingTasksPerPage.value : '10';
-      const weather_city = settingWeatherCity ? settingWeatherCity.value.trim() : '';
-      const weather_apikey = settingWeatherApiKey ? settingWeatherApiKey.value.trim() : '';
 
       try {
+        const currentSettings = await api.getSettings();
         await api.saveSettings({
           app_title,
           tasks_per_page,
-          weather_city,
-          weather_apikey
+          weather_apikey: '******',
+          password_protection_enabled: currentSettings.password_protection_enabled,
+          app_password: '******',
+          background_type: currentSettings.background_type,
+          background_url: currentSettings.background_url
         });
         await fetchSettings();
         fetchTasks();
@@ -724,6 +724,31 @@ export function initSettingsEvents() {
   initSystemSettingsEvents();
   initBackgroundEvents();
   initPasswordEvents();
+  initWeatherSettingsEvents();
+  initTabNavigation();
+}
+
+export function initTabNavigation() {
+  const tabBtns = document.querySelectorAll('.settings-tab-btn');
+  const tabPanels = document.querySelectorAll('.settings-tab-panel');
+
+  tabBtns.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const tabId = btn.dataset.tab;
+
+      // Update tab button active states
+      tabBtns.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      // Update panel visibility active states
+      tabPanels.forEach((panel) => {
+        panel.classList.remove('active');
+        if (panel.id === `settings-tab-${tabId}`) {
+          panel.classList.add('active');
+        }
+      });
+    });
+  });
 }
 
 export function initPasswordEvents() {
@@ -764,6 +789,35 @@ export function initPasswordEvents() {
       } catch (err) {
         console.error('Error saving password settings:', err);
         alert('Failed to save password settings.');
+      }
+    });
+  }
+}
+
+export function initWeatherSettingsEvents() {
+  const weatherSettingsForm = document.getElementById('weatherSettingsForm');
+  if (weatherSettingsForm) {
+    weatherSettingsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const settingWeatherApiKey = document.getElementById('settingWeatherApiKey');
+      const weather_apikey = settingWeatherApiKey ? settingWeatherApiKey.value.trim() : '';
+
+      try {
+        const currentSettings = await api.getSettings();
+        await api.saveSettings({
+          app_title: currentSettings.app_title || state.appTitle,
+          tasks_per_page: currentSettings.tasks_per_page || state.tasksPerPage,
+          weather_apikey: weather_apikey,
+          password_protection_enabled: currentSettings.password_protection_enabled,
+          app_password: '******',
+          background_type: currentSettings.background_type,
+          background_url: currentSettings.background_url
+        });
+        await fetchSettings();
+        alert('Weather settings saved successfully!');
+      } catch (err) {
+        console.error('Error saving weather settings:', err);
+        alert('Failed to save weather settings.');
       }
     });
   }

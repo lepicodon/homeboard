@@ -71,6 +71,20 @@ describe('API Integration Tests', () => {
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);
     });
+
+    test('POST /api/settings/background/fetch-external should reject private or loopback URLs (SSRF protection)', async () => {
+      const res1 = await request(app)
+        .post('/api/settings/background/fetch-external')
+        .send({ url: 'http://localhost/image.png' });
+      expect(res1.status).toBe(400);
+      expect(res1.body.error).toContain('Restricted URL');
+
+      const res2 = await request(app)
+        .post('/api/settings/background/fetch-external')
+        .send({ url: 'http://127.0.0.1:3000/public/css/style.css' });
+      expect(res2.status).toBe(400);
+      expect(res2.body.error).toContain('Restricted URL');
+    });
   });
 
   describe('Password-Protected API Operations', () => {

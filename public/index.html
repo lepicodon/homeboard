@@ -520,283 +520,336 @@
             </div>
           </header>
 
-          <div class="settings-grid settings-row">
-            <!-- Background Settings card -->
-            <div class="settings-card">
-              <div class="card-header">
-                <span class="card-header-icon">🖼️</span>
-                <h2>Background Wallpaper</h2>
-              </div>
+          <!-- Settings Navigation Tabs -->
+          <nav class="settings-tabs">
+            <button type="button" class="settings-tab-btn active" data-tab="general">
+              <span>⚙️</span>
+              <span>General</span>
+            </button>
+            <button type="button" class="settings-tab-btn" data-tab="family">
+              <span>👥</span>
+              <span>Family Members</span>
+            </button>
+            <button type="button" class="settings-tab-btn" data-tab="categories">
+              <span>🏷️</span>
+              <span>Categories</span>
+            </button>
+            <button type="button" class="settings-tab-btn" data-tab="wallpaper">
+              <span>🖼️</span>
+              <span>Wallpaper</span>
+            </button>
+          </nav>
 
-              <form id="backgroundSettingsForm" class="settings-form">
-                <div class="form-group">
-                  <label for="settingBackgroundType">Wallpaper Mode</label>
-                  <select id="settingBackgroundType">
-                    <option value="none">Default (None)</option>
-                    <option value="custom">Custom Wallpaper</option>
-                  </select>
-                </div>
+          <div class="settings-content">
+            <!-- General Tab -->
+            <div id="settings-tab-general" class="settings-tab-panel active">
+              <div class="settings-grid">
+                <!-- System Settings card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">⚙️</span>
+                    <h2>System Settings</h2>
+                  </div>
 
-                <div id="customBackgroundOptions" class="hidden">
-                  <!-- File Upload -->
-                  <div class="form-group">
-                    <label>Upload Local Image</label>
-                    <div style="display: flex; gap: 8px; margin-top: 4px">
-                      <button type="button" id="uploadBackgroundBtn" class="btn btn-secondary w-full">
-                        <span>📁 Choose File</span>
-                      </button>
-                      <input
-                        type="file"
-                        id="backgroundFileInput"
-                        accept="image/png, image/jpeg, image/jpg"
-                        class="hidden"
-                      />
-                      <button
-                        type="button"
-                        id="clearBackgroundBtn"
-                        class="btn btn-danger hidden"
-                        title="Clear Wallpaper"
-                      >
-                        ✕
-                      </button>
+                  <form id="systemSettingsForm" class="settings-form">
+                    <div class="form-group">
+                      <label for="settingAppTitle">App Name / Title</label>
+                      <input type="text" id="settingAppTitle" required placeholder="e.g. HomeBoard, Smith Household" />
                     </div>
-                    <p class="form-input-hint">Supports PNG, JPG, or JPEG. Auto-optimized.</p>
-                  </div>
-
-                  <!-- OR Divider -->
-                  <div
-                    style="
-                      text-align: center;
-                      margin: 8px 0;
-                      color: var(--text-secondary);
-                      font-size: 12px;
-                      font-weight: 600;
-                    "
-                  >
-                    — OR —
-                  </div>
-
-                  <!-- URL Input -->
-                  <div class="form-group">
-                    <label for="settingBackgroundUrl">Import from URL</label>
-                    <div style="display: flex; gap: 8px">
-                      <input type="url" id="settingBackgroundUrl" placeholder="https://example.com/image.jpg" />
-                      <button type="button" id="importBackgroundUrlBtn" class="btn btn-secondary">Import</button>
+                    <div class="form-group">
+                      <label for="settingTasksPerPage">Tasks Per Page</label>
+                      <select id="settingTasksPerPage">
+                        <option value="5">5 Tasks</option>
+                        <option value="10" selected>10 Tasks</option>
+                        <option value="20">20 Tasks</option>
+                        <option value="50">50 Tasks</option>
+                        <option value="all">Show All (No Pagination)</option>
+                      </select>
                     </div>
-                  </div>
-
-                  <!-- Wallpaper Preview -->
-                  <div class="form-group">
-                    <label>Active Wallpaper Preview</label>
-                    <div id="backgroundPreviewContainer" class="background-preview-box">
-                      <span id="backgroundPreviewPlaceholder">No Custom Wallpaper Active</span>
-                      <img id="backgroundPreviewImg" class="hidden" alt="Background Preview" />
+                    <div class="settings-form-actions">
+                      <button type="submit" class="btn btn-primary w-full">Save System Settings</button>
                     </div>
+                  </form>
+                </div>
+
+                <!-- Weather Settings card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">🌤️</span>
+                    <h2>Weather Settings</h2>
                   </div>
+
+                  <form id="weatherSettingsForm" class="settings-form">
+                    <div class="form-group">
+                      <label for="settingWeatherApiKey">OpenWeatherMap API Key</label>
+                      <input type="password" id="settingWeatherApiKey" placeholder="Enter API Key" />
+                    </div>
+                    <div class="settings-form-actions">
+                      <button type="submit" class="btn btn-primary w-full">Save Weather Settings</button>
+                    </div>
+                  </form>
                 </div>
 
-                <div class="settings-form-actions">
-                  <button type="submit" class="btn btn-primary w-full">Apply Wallpaper Mode</button>
-                </div>
-              </form>
-            </div>
-
-            <!-- Password Protection Settings card -->
-            <div class="settings-card">
-              <div class="card-header">
-                <span class="card-header-icon">🔒</span>
-                <h2>Security Settings</h2>
-              </div>
-
-              <form id="passwordSettingsForm" class="settings-form">
-                <div
-                  class="form-group"
-                  style="display: flex; flex-direction: row; align-items: center; gap: 8px; margin-bottom: 12px"
-                >
-                  <input
-                    type="checkbox"
-                    id="settingPasswordEnabled"
-                    style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
-                  />
-                  <label for="settingPasswordEnabled" style="margin-bottom: 0; cursor: pointer; font-weight: 500"
-                    >Enable Password Protection</label
-                  >
-                </div>
-                <div class="form-group">
-                  <label for="settingAppPassword">Access Password</label>
-                  <input type="password" id="settingAppPassword" placeholder="Enter Password" />
-                </div>
-                <div class="settings-form-actions">
-                  <button type="submit" class="btn btn-primary w-full">Save Password Settings</button>
-                </div>
-              </form>
-            </div>
-
-            <!-- System Settings card -->
-            <div class="settings-card">
-              <div class="card-header">
-                <span class="card-header-icon">⚙️</span>
-                <h2>System Settings</h2>
-              </div>
-
-              <form id="systemSettingsForm" class="settings-form">
-                <div class="form-group">
-                  <label for="settingAppTitle">App Name / Title</label>
-                  <input type="text" id="settingAppTitle" required placeholder="e.g. HomeBoard, Smith Household" />
-                </div>
-                <div class="form-group">
-                  <label for="settingTasksPerPage">Tasks Per Page</label>
-                  <select id="settingTasksPerPage">
-                    <option value="5">5 Tasks</option>
-                    <option value="10" selected>10 Tasks</option>
-                    <option value="20">20 Tasks</option>
-                    <option value="50">50 Tasks</option>
-                    <option value="all">Show All (No Pagination)</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="settingWeatherApiKey">OpenWeatherMap API Key</label>
-                  <input type="password" id="settingWeatherApiKey" placeholder="Enter API Key" />
-                </div>
-                <div class="settings-form-actions">
-                  <button type="submit" class="btn btn-primary w-full">Save Settings</button>
-                </div>
-              </form>
-            </div>
-          </div>
-
-          <div class="settings-grid settings-row">
-            <!-- Family Members card -->
-            <div class="settings-card">
-              <div class="card-header">
-                <span class="card-header-icon">👥</span>
-                <h2 id="memberFormTitle">Family Members</h2>
-              </div>
-
-              <form id="addMemberForm" class="settings-form">
-                <input type="hidden" id="memberIdField" />
-
-                <!-- Avatar Upload Block -->
-                <div class="avatar-upload-container">
-                  <div class="avatar-upload-preview" id="avatarPreviewContainer">
-                    <span id="avatarPlaceholder">?</span>
-                    <img id="avatarImage" class="hidden" alt="Profile Preview" />
+                <!-- Password Protection Settings card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">🔒</span>
+                    <h2>Security Settings</h2>
                   </div>
-                  <div class="avatar-upload-actions">
-                    <button type="button" id="uploadAvatarBtn" class="btn btn-secondary btn-icon-text">
-                      <span>📷</span>
-                      <span>Upload Photo</span>
-                    </button>
-                    <input type="file" id="memberAvatar" accept="image/*" class="hidden" />
-                    <button
-                      type="button"
-                      id="removeAvatarBtn"
-                      class="btn btn-danger btn-icon hidden"
-                      title="Remove Photo"
+
+                  <form id="passwordSettingsForm" class="settings-form">
+                    <div
+                      class="form-group"
+                      style="display: flex; flex-direction: row; align-items: center; gap: 8px; margin-bottom: 12px"
                     >
-                      ✕
-                    </button>
-                  </div>
-                </div>
-
-                <div class="form-row">
-                  <div class="form-group flex-grow">
-                    <label for="memberName">Member Name</label>
-                    <input type="text" id="memberName" required placeholder="e.g. Alice, Bob" />
-                  </div>
-                  <div class="form-group">
-                    <label for="memberColor">Color</label>
-                    <div class="color-picker-wrapper">
-                      <input type="color" id="memberColor" value="#3b82f6" />
+                      <input
+                        type="checkbox"
+                        id="settingPasswordEnabled"
+                        style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
+                      />
+                      <label for="settingPasswordEnabled" style="margin-bottom: 0; cursor: pointer; font-weight: 500"
+                        >Enable Password Protection</label
+                      >
                     </div>
-                  </div>
-                </div>
-
-                <div class="settings-form-actions">
-                  <button type="submit" id="memberFormSubmitBtn" class="btn btn-primary flex-grow">
-                    Add Family Member
-                  </button>
-                  <button type="button" id="cancelMemberEditBtn" class="btn btn-secondary hidden">Cancel</button>
-                </div>
-              </form>
-
-              <div class="settings-list-container">
-                <h3>Existing Members</h3>
-                <ul id="membersList" class="settings-list">
-                  <!-- Dynamically populated -->
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          <div class="settings-grid">
-            <!-- Task Categories card -->
-            <div class="settings-card">
-              <div class="card-header">
-                <span class="card-header-icon">🏷️</span>
-                <h2 id="categoryFormTitle">Task Categories</h2>
-              </div>
-
-              <form id="addCategoryForm" class="settings-form">
-                <input type="hidden" id="categoryIdField" />
-                <div class="form-row">
-                  <div class="form-group flex-grow">
-                    <label for="categoryName">Category Name</label>
-                    <input type="text" id="categoryName" required placeholder="e.g. Garden, Homework" />
-                  </div>
-                  <div class="form-group">
-                    <label for="categoryColor">Color</label>
-                    <div class="color-picker-wrapper">
-                      <input type="color" id="categoryColor" value="#10b981" />
+                    <div class="form-group">
+                      <label for="settingAppPassword">Access Password</label>
+                      <input type="password" id="settingAppPassword" placeholder="Enter Password" />
                     </div>
-                  </div>
+                    <div class="settings-form-actions">
+                      <button type="submit" class="btn btn-primary w-full">Save Password Settings</button>
+                    </div>
+                  </form>
                 </div>
-                <div class="settings-form-actions">
-                  <button type="submit" id="categoryFormSubmitBtn" class="btn btn-primary flex-grow">
-                    Add Category
-                  </button>
-                  <button type="button" id="cancelCategoryEditBtn" class="btn btn-secondary hidden">Cancel</button>
-                </div>
-              </form>
-
-              <div class="settings-list-container">
-                <h3>Existing Categories</h3>
-                <ul id="categoriesList" class="settings-list">
-                  <!-- Dynamically populated -->
-                </ul>
               </div>
             </div>
 
-            <!-- Shopping Categories card -->
-            <div class="settings-card">
-              <div class="card-header">
-                <span class="card-header-icon">🛒</span>
-                <h2 id="shoppingCategoryFormTitle">Shopping Categories</h2>
-              </div>
+            <!-- Family Members Tab -->
+            <div id="settings-tab-family" class="settings-tab-panel">
+              <div class="settings-card">
+                <div class="card-header">
+                  <span class="card-header-icon">👥</span>
+                  <h2 id="memberFormTitle">Family Members</h2>
+                </div>
 
-              <form id="addShoppingCategoryForm" class="settings-form">
-                <input type="hidden" id="shoppingCategoryIdField" />
-                <div class="form-row">
-                  <div class="form-group flex-grow">
-                    <label for="shoppingCategoryName">Category Name</label>
-                    <input type="text" id="shoppingCategoryName" required placeholder="e.g. Toiletries, Snacks" />
+                <div class="settings-split-layout">
+                  <form id="addMemberForm" class="settings-form">
+                    <input type="hidden" id="memberIdField" />
+
+                    <!-- Avatar Upload Block -->
+                    <div class="avatar-upload-container">
+                      <div class="avatar-upload-preview" id="avatarPreviewContainer">
+                        <span id="avatarPlaceholder">?</span>
+                        <img id="avatarImage" class="hidden" alt="Profile Preview" />
+                      </div>
+                      <div class="avatar-upload-actions">
+                        <button type="button" id="uploadAvatarBtn" class="btn btn-secondary btn-icon-text">
+                          <span>📷</span>
+                          <span>Upload Photo</span>
+                        </button>
+                        <input type="file" id="memberAvatar" accept="image/*" class="hidden" />
+                        <button
+                          type="button"
+                          id="removeAvatarBtn"
+                          class="btn btn-danger btn-icon hidden"
+                          title="Remove Photo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+
+                    <div class="form-row">
+                      <div class="form-group flex-grow">
+                        <label for="memberName">Member Name</label>
+                        <input type="text" id="memberName" required placeholder="e.g. Alice, Bob" />
+                      </div>
+                      <div class="form-group">
+                        <label for="memberColor">Color</label>
+                        <div class="color-picker-wrapper">
+                          <input type="color" id="memberColor" value="#3b82f6" />
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="settings-form-actions">
+                      <button type="submit" id="memberFormSubmitBtn" class="btn btn-primary flex-grow">
+                        Add Family Member
+                      </button>
+                      <button type="button" id="cancelMemberEditBtn" class="btn btn-secondary hidden">Cancel</button>
+                    </div>
+                  </form>
+
+                  <div class="settings-list-container">
+                    <h3>Existing Members</h3>
+                    <ul id="membersList" class="settings-list">
+                      <!-- Dynamically populated -->
+                    </ul>
                   </div>
                 </div>
-                <div class="settings-form-actions">
-                  <button type="submit" id="shoppingCategoryFormSubmitBtn" class="btn btn-primary flex-grow">
-                    Add Category
-                  </button>
-                  <button type="button" id="cancelShoppingCategoryEditBtn" class="btn btn-secondary hidden">
-                    Cancel
-                  </button>
-                </div>
-              </form>
+              </div>
+            </div>
 
-              <div class="settings-list-container">
-                <h3>Existing Categories</h3>
-                <ul id="shoppingCategoriesList" class="settings-list">
-                  <!-- Dynamically populated -->
-                </ul>
+            <!-- Categories Tab -->
+            <div id="settings-tab-categories" class="settings-tab-panel">
+              <div class="settings-grid">
+                <!-- Task Categories card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">🏷️</span>
+                    <h2 id="categoryFormTitle">Task Categories</h2>
+                  </div>
+
+                  <form id="addCategoryForm" class="settings-form">
+                    <input type="hidden" id="categoryIdField" />
+                    <div class="form-row">
+                      <div class="form-group flex-grow">
+                        <label for="categoryName">Category Name</label>
+                        <input type="text" id="categoryName" required placeholder="e.g. Garden, Homework" />
+                      </div>
+                      <div class="form-group">
+                        <label for="categoryColor">Color</label>
+                        <div class="color-picker-wrapper">
+                          <input type="color" id="categoryColor" value="#10b981" />
+                        </div>
+                      </div>
+                    </div>
+                    <div class="settings-form-actions">
+                      <button type="submit" id="categoryFormSubmitBtn" class="btn btn-primary flex-grow">
+                        Add Category
+                      </button>
+                      <button type="button" id="cancelCategoryEditBtn" class="btn btn-secondary hidden">Cancel</button>
+                    </div>
+                  </form>
+
+                  <div class="settings-list-container">
+                    <h3>Existing Categories</h3>
+                    <ul id="categoriesList" class="settings-list">
+                      <!-- Dynamically populated -->
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Shopping Categories card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">🛒</span>
+                    <h2 id="shoppingCategoryFormTitle">Shopping Categories</h2>
+                  </div>
+
+                  <form id="addShoppingCategoryForm" class="settings-form">
+                    <input type="hidden" id="shoppingCategoryIdField" />
+                    <div class="form-row">
+                      <div class="form-group flex-grow">
+                        <label for="shoppingCategoryName">Category Name</label>
+                        <input type="text" id="shoppingCategoryName" required placeholder="e.g. Toiletries, Snacks" />
+                      </div>
+                    </div>
+                    <div class="settings-form-actions">
+                      <button type="submit" id="shoppingCategoryFormSubmitBtn" class="btn btn-primary flex-grow">
+                        Add Category
+                      </button>
+                      <button type="button" id="cancelShoppingCategoryEditBtn" class="btn btn-secondary hidden">
+                        Cancel
+                      </button>
+                    </div>
+                  </form>
+
+                  <div class="settings-list-container">
+                    <h3>Existing Categories</h3>
+                    <ul id="shoppingCategoriesList" class="settings-list">
+                      <!-- Dynamically populated -->
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Wallpaper Tab -->
+            <div id="settings-tab-wallpaper" class="settings-tab-panel">
+              <!-- Background Settings card -->
+              <div class="settings-card">
+                <div class="card-header">
+                  <span class="card-header-icon">🖼️</span>
+                  <h2>Background Wallpaper</h2>
+                </div>
+
+                <form id="backgroundSettingsForm" class="settings-form">
+                  <div class="form-group">
+                    <label for="settingBackgroundType">Wallpaper Mode</label>
+                    <select id="settingBackgroundType">
+                      <option value="none">Default (None)</option>
+                      <option value="custom">Custom Wallpaper</option>
+                    </select>
+                  </div>
+
+                  <div id="customBackgroundOptions" class="hidden">
+                    <!-- File Upload -->
+                    <div class="form-group">
+                      <label>Upload Local Image</label>
+                      <div style="display: flex; gap: 8px; margin-top: 4px">
+                        <button type="button" id="uploadBackgroundBtn" class="btn btn-secondary w-full">
+                          <span>📁 Choose File</span>
+                        </button>
+                        <input
+                          type="file"
+                          id="backgroundFileInput"
+                          accept="image/png, image/jpeg, image/jpg"
+                          class="hidden"
+                        />
+                        <button
+                          type="button"
+                          id="clearBackgroundBtn"
+                          class="btn btn-danger hidden"
+                          title="Clear Wallpaper"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <p class="form-input-hint">Supports PNG, JPG, or JPEG. Auto-optimized.</p>
+                    </div>
+
+                    <!-- OR Divider -->
+                    <div
+                      style="
+                        text-align: center;
+                        margin: 8px 0;
+                        color: var(--text-secondary);
+                        font-size: 12px;
+                        font-weight: 600;
+                      "
+                    >
+                      — OR —
+                    </div>
+
+                    <!-- URL Input -->
+                    <div class="form-group">
+                      <label for="settingBackgroundUrl">Import from URL</label>
+                      <div style="display: flex; gap: 8px">
+                        <input
+                          type="url"
+                          id="settingBackgroundUrl"
+                          class="flex-grow"
+                          style="min-width: 0"
+                          placeholder="https://example.com/image.jpg"
+                        />
+                        <button type="button" id="importBackgroundUrlBtn" class="btn btn-secondary">Import</button>
+                      </div>
+                    </div>
+
+                    <!-- Wallpaper Preview -->
+                    <div class="form-group">
+                      <label>Active Wallpaper Preview</label>
+                      <div id="backgroundPreviewContainer" class="background-preview-box">
+                        <span id="backgroundPreviewPlaceholder">No Custom Wallpaper Active</span>
+                        <img id="backgroundPreviewImg" class="hidden" alt="Background Preview" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="settings-form-actions">
+                    <button type="submit" class="btn btn-primary w-full">Apply Wallpaper Mode</button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
