@@ -3,6 +3,9 @@ const settingsRouter = express.Router();
 const weatherRouter = express.Router();
 const db = require('../config/db');
 const { URL } = require('url');
+const crypto = require('crypto');
+const zlib = require('zlib');
+const path = require('path');
 
 // In-memory weather forecast cache (keyed by city name lowercase)
 const weatherCache = {};
@@ -408,6 +411,117 @@ weatherRouter.get('/', async (req, res) => {
   } catch (err) {
     console.error(`[Weather] Unexpected weather API error:`, err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// POST DB Backup
+settingsRouter.post('/backup', async (req, res) => {
+  const { password } = req.body;
+  const tempPath = path.join(__dirname, '..', '..', `temp_backup_${Date.now()}.db`);
+  try {
+    await db.backup(tempPath);
+    const dbBuffer = fs.readFileSync(tempPath);
+    if (fs.existsSync(tempPath)) {
+      fs.unlinkSync(tempPath);
+    }
+
+    const compressed = zlib.gzipSync(dbBuffer);
+    let finalBuffer = compressed;
+    let filename = `homeboard_backup_${new Date().toISOString().slice(0, 10)}.db.gz`;
+
+    if (password && password.trim()) {
+      const salt = crypto.randomBytes(16);
+      const key = crypto.scryptSync(password.trim(), salt, 32, { N: 16384, r: 8, p: 1 });
+      const iv = crypto.randomBytes(12);
+      const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
+      const ciphertext = Buffer.concat([cipher.update(compressed), cipher.final()]);
+      const authTag = cipher.getAuthTag();
+
+      const header = Buffer.from('HBENC');
+      finalBuffer = Buffer.concat([header, salt, iv, authTag, ciphertext]);
+      filename += '.enc';
+    }
+
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(finalBuffer);
+  } catch (err) {
+    if (fs.existsSync(tempPath)) {
+      try {
+        fs.unlinkSync(tempPath);
+      } catch {
+        // Ignore cleanup failure
+      }
+    }
+    console.error('Backup error:', err);
+    res.status(500).json({ error: 'Failed to create backup: ' + err.message });
+  }
+});
+
+// POST DB Restore
+settingsRouter.post('/restore', async (req, res) => {
+  const { file, password } = req.body;
+  if (!file) {
+    return res.status(400).json({ error: 'Backup file data is required.' });
+  }
+
+  const tempRestorePath = path.join(__dirname, '..', '..', `temp_restore_${Date.now()}.db`);
+  try {
+    const fileBuffer = Buffer.from(file, 'base64');
+    let decryptedBuffer;
+
+    const header = fileBuffer.subarray(0, 5).toString();
+    if (header === 'HBENC') {
+      if (!password || !password.trim()) {
+        return res.status(400).json({ error: 'PASSWORD_REQUIRED' });
+      }
+
+      const salt = fileBuffer.subarray(5, 21);
+      const iv = fileBuffer.subarray(21, 33);
+      const authTag = fileBuffer.subarray(33, 49);
+      const ciphertext = fileBuffer.subarray(49);
+
+      try {
+        const key = crypto.scryptSync(password.trim(), salt, 32, { N: 16384, r: 8, p: 1 });
+        const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
+        decipher.setAuthTag(authTag);
+        decryptedBuffer = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
+      } catch {
+        return res.status(400).json({ error: 'INCORRECT_PASSWORD' });
+      }
+    } else {
+      decryptedBuffer = fileBuffer;
+    }
+
+    let dbBuffer;
+    try {
+      dbBuffer = zlib.gunzipSync(decryptedBuffer);
+    } catch {
+      return res.status(400).json({ error: 'Invalid file format. Ensure it is a valid backup file.' });
+    }
+
+    if (dbBuffer.subarray(0, 16).toString() !== 'SQLite format 3\0') {
+      return res.status(400).json({ error: 'Not a valid SQLite database file.' });
+    }
+
+    fs.writeFileSync(tempRestorePath, dbBuffer);
+    db.closeAndReplace(tempRestorePath);
+
+    if (fs.existsSync(tempRestorePath)) {
+      fs.unlinkSync(tempRestorePath);
+    }
+
+    res.json({ success: true });
+  } catch (err) {
+    if (fs.existsSync(tempRestorePath)) {
+      try {
+        fs.unlinkSync(tempRestorePath);
+      } catch {
+        // Ignore cleanup failure
+      }
+    }
+    console.error('Restore error:', err);
+    res.status(500).json({ error: 'Failed to restore database: ' + err.message });
   }
 });
 

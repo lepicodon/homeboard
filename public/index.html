@@ -449,7 +449,7 @@
                     class="btn btn-secondary btn-icon-sm"
                     id="weatherUnitToggle"
                     title="Toggle Temperature Unit"
-                    style="font-weight: bold;"
+                    style="font-weight: bold"
                   >
                     °C
                   </button>
@@ -552,6 +552,10 @@
             <button type="button" class="settings-tab-btn" data-tab="wallpaper">
               <span>🖼️</span>
               <span>Wallpaper</span>
+            </button>
+            <button type="button" class="settings-tab-btn" data-tab="backup">
+              <span>💾</span>
+              <span>Backup & Restore</span>
             </button>
           </nav>
 
@@ -867,6 +871,58 @@
                 </form>
               </div>
             </div>
+
+            <!-- Backup & Restore Tab -->
+            <div id="settings-tab-backup" class="settings-tab-panel">
+              <div class="settings-grid">
+                <!-- Backup Card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">💾</span>
+                    <h2>Backup Database</h2>
+                  </div>
+                  <form id="backupForm" class="settings-form">
+                    <div class="form-group flex-row">
+                      <div class="form-control-check">
+                        <input type="checkbox" id="encryptBackup" />
+                        <label for="encryptBackup">Password Protect Backup (Encrypted)</label>
+                      </div>
+                    </div>
+                    <div id="backupPasswordGroup" class="form-group hidden">
+                      <label for="backupPassword">Backup Password</label>
+                      <input
+                        type="password"
+                        id="backupPassword"
+                        placeholder="Enter password to encrypt"
+                        autocomplete="new-password"
+                      />
+                    </div>
+                    <div class="settings-form-actions">
+                      <button type="submit" class="btn btn-primary w-full" id="downloadBackupBtn">
+                        Download Backup
+                      </button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Restore Card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">🔄</span>
+                    <h2>Restore Database</h2>
+                  </div>
+                  <form id="restoreForm" class="settings-form">
+                    <div class="form-group">
+                      <label for="restoreFileInput">Choose Backup File (.db.gz or .db.gz.enc)</label>
+                      <input type="file" id="restoreFileInput" accept=".gz,.enc" />
+                    </div>
+                    <div class="settings-form-actions">
+                      <button type="submit" class="btn btn-danger w-full" id="startRestoreBtn">Restore Database</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
       </main>
@@ -1058,6 +1114,37 @@
         <footer class="modal-footer">
           <button type="button" class="btn btn-secondary" id="cancelDeleteBtn">Cancel</button>
           <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+        </footer>
+      </div>
+    </dialog>
+
+    <!-- Restore Confirmation Modal -->
+    <dialog id="restoreConfirmModal" closedby="any" aria-labelledby="restoreModalTitle">
+      <div class="modal-wrapper">
+        <header class="modal-header">
+          <h2 id="restoreModalTitle">Restore Database</h2>
+          <button type="button" class="close-modal-btn" id="closeRestoreModalBtn" aria-label="Close dialog">✕</button>
+        </header>
+
+        <div class="modal-body">
+          <p class="warning-text" style="color: var(--danger-color); font-weight: bold; margin-bottom: 12px">
+            ⚠️ WARNING: This will overwrite all current tasks, family members, categories, memos, and settings. This
+            action cannot be undone!
+          </p>
+          <div id="restorePasswordGroup" class="form-group hidden">
+            <label for="restorePassword">This backup is password protected. Enter password to decrypt:</label>
+            <input
+              type="password"
+              id="restorePassword"
+              placeholder="Backup password"
+              style="margin-top: 6px; width: 100%"
+            />
+          </div>
+        </div>
+
+        <footer class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancelRestoreBtn">Cancel</button>
+          <button type="button" class="btn btn-danger" id="confirmRestoreBtn">Restore & Overwrite</button>
         </footer>
       </div>
     </dialog>

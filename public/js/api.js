@@ -331,5 +331,31 @@ export const api = {
     const res = await customFetch('/api/settings/background', { method: 'DELETE' });
     if (!res.ok) throw new Error('Failed to delete background');
     return res.json();
+  },
+
+  async downloadBackup(password) {
+    const res = await customFetch('/api/settings/backup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to download backup');
+    }
+    return res.blob();
+  },
+
+  async restoreDatabase(fileBase64, password) {
+    const res = await customFetch('/api/settings/restore', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ file: fileBase64, password })
+    });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error || 'Failed to restore database');
+    }
+    return res.json();
   }
 };

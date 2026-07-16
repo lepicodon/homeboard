@@ -726,6 +726,7 @@ export function initSettingsEvents() {
   initPasswordEvents();
   initWeatherSettingsEvents();
   initTabNavigation();
+  initBackupEvents();
 }
 
 export function initTabNavigation() {
@@ -818,6 +819,164 @@ export function initWeatherSettingsEvents() {
       } catch (err) {
         console.error('Error saving weather settings:', err);
         alert('Failed to save weather settings.');
+      }
+    });
+  }
+}
+
+export function initBackupEvents() {
+  const encryptBackup = document.getElementById('encryptBackup');
+  const backupPasswordGroup = document.getElementById('backupPasswordGroup');
+  const backupPassword = document.getElementById('backupPassword');
+  const backupForm = document.getElementById('backupForm');
+  const restoreForm = document.getElementById('restoreForm');
+  const restoreFileInput = document.getElementById('restoreFileInput');
+
+  const restoreConfirmModal = document.getElementById('restoreConfirmModal');
+  const closeRestoreModalBtn = document.getElementById('closeRestoreModalBtn');
+  const cancelRestoreBtn = document.getElementById('cancelRestoreBtn');
+  const confirmRestoreBtn = document.getElementById('confirmRestoreBtn');
+  const restorePasswordGroup = document.getElementById('restorePasswordGroup');
+  const restorePassword = document.getElementById('restorePassword');
+
+  let fileBase64ToRestore = '';
+  let fileIsEncrypted = false;
+
+  // Toggle backup password field
+  if (encryptBackup && backupPasswordGroup) {
+    encryptBackup.addEventListener('change', () => {
+      if (encryptBackup.checked) {
+        backupPasswordGroup.classList.remove('hidden');
+        backupPassword.focus();
+      } else {
+        backupPasswordGroup.classList.add('hidden');
+        backupPassword.value = '';
+      }
+    });
+  }
+
+  // Handle backup download
+  if (backupForm) {
+    backupForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const passwordVal = encryptBackup.checked ? backupPassword.value : '';
+      if (encryptBackup.checked && !passwordVal) {
+        alert('Please enter a password for the encrypted backup.');
+        return;
+      }
+
+      const downloadBackupBtn = document.getElementById('downloadBackupBtn');
+      const originalText = downloadBackupBtn.textContent;
+      downloadBackupBtn.textContent = 'Generating Backup...';
+      downloadBackupBtn.disabled = true;
+
+      try {
+        const blob = await api.downloadBackup(passwordVal);
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+
+        const dateStr = new Date().toISOString().slice(0, 10);
+        a.download = `homeboard_backup_${dateStr}.db.gz` + (passwordVal ? '.enc' : '');
+
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+      } catch (err) {
+        console.error('Backup download error:', err);
+        alert(err.message || 'Failed to generate backup.');
+      } finally {
+        downloadBackupBtn.textContent = originalText;
+        downloadBackupBtn.disabled = false;
+      }
+    });
+  }
+
+  // Handle start restore trigger
+  if (restoreForm) {
+    restoreForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!restoreFileInput.files || restoreFileInput.files.length === 0) {
+        alert('Please select a backup file to restore.');
+        return;
+      }
+
+      const file = restoreFileInput.files[0];
+      const reader = new FileReader();
+
+      reader.onload = (event) => {
+        const fullBase64 = event.target.result;
+        fileBase64ToRestore = fullBase64.split(',')[1];
+
+        // Decode header to check if encrypted
+        try {
+          const header = window.atob(fileBase64ToRestore.substring(0, 8)).substring(0, 5);
+          fileIsEncrypted = header === 'HBENC';
+        } catch {
+          fileIsEncrypted = false;
+        }
+
+        // Show/hide the password group in the confirmation modal
+        if (fileIsEncrypted) {
+          restorePasswordGroup.classList.remove('hidden');
+          restorePassword.value = '';
+        } else {
+          restorePasswordGroup.classList.add('hidden');
+          restorePassword.value = '';
+        }
+
+        if (restoreConfirmModal) {
+          restoreConfirmModal.showModal();
+        }
+      };
+
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Close restore modal
+  const closeModal = () => {
+    if (restoreConfirmModal) {
+      restoreConfirmModal.close();
+    }
+    fileBase64ToRestore = '';
+    restorePassword.value = '';
+  };
+
+  if (closeRestoreModalBtn) closeRestoreModalBtn.addEventListener('click', closeModal);
+  if (cancelRestoreBtn) cancelRestoreBtn.addEventListener('click', closeModal);
+
+  // Execute restore
+  if (confirmRestoreBtn) {
+    confirmRestoreBtn.addEventListener('click', async () => {
+      const passwordVal = fileIsEncrypted ? restorePassword.value : '';
+      if (fileIsEncrypted && !passwordVal) {
+        alert('Please enter the password to decrypt the backup file.');
+        return;
+      }
+
+      const originalText = confirmRestoreBtn.textContent;
+      confirmRestoreBtn.textContent = 'Restoring...';
+      confirmRestoreBtn.disabled = true;
+
+      try {
+        await api.restoreDatabase(fileBase64ToRestore, passwordVal);
+        alert('Database restored successfully! The page will now reload.');
+        closeModal();
+        window.location.reload();
+      } catch (err) {
+        console.error('Database restore error:', err);
+        if (err.message.includes('INCORRECT_PASSWORD')) {
+          alert('Incorrect password. Please try again.');
+        } else if (err.message.includes('PASSWORD_REQUIRED')) {
+          alert('Password is required for this encrypted backup.');
+        } else {
+          alert(err.message || 'Failed to restore database. Ensure the file is not corrupted.');
+        }
+      } finally {
+        confirmRestoreBtn.textContent = originalText;
+        confirmRestoreBtn.disabled = false;
       }
     });
   }

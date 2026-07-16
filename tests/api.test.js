@@ -139,4 +139,108 @@ describe('API Integration Tests', () => {
       expect(res.body.error).toBe('Incorrect password');
     });
   });
+
+  describe('Backup & Restore API Operations', () => {
+    let unencryptedBackupBase64 = '';
+    let encryptedBackupBase64 = '';
+    const BACKUP_PASS = 'backup-secure-pass';
+
+    beforeAll(async () => {
+      // Disable password protection for backup tests
+      db.prepare("UPDATE settings SET value = '0' WHERE key = 'password_protection_enabled'").run();
+      db.prepare("UPDATE settings SET value = '' WHERE key = 'app_password'").run();
+
+      // Insert a dummy category to backup
+      db.prepare("INSERT OR IGNORE INTO categories (name, color) VALUES ('BackupTestUnique', '#ffffff')").run();
+
+      // Make an unencrypted backup
+      const resUnencrypted = await request(app).post('/api/settings/backup').send({ password: '' });
+      expect(resUnencrypted.status).toBe(200);
+      unencryptedBackupBase64 = resUnencrypted.body.toString('base64');
+
+      // Make an encrypted backup
+      const resEncrypted = await request(app).post('/api/settings/backup').send({ password: BACKUP_PASS });
+      expect(resEncrypted.status).toBe(200);
+      encryptedBackupBase64 = resEncrypted.body.toString('base64');
+
+      // Remove the category to test restore later
+      db.prepare("DELETE FROM categories WHERE name = 'BackupTestUnique'").run();
+    });
+
+    test('POST /api/settings/backup should return compressed binary for unencrypted backup', async () => {
+      const res = await request(app).post('/api/settings/backup').send({ password: '' });
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toBe('application/octet-stream');
+      expect(res.headers['content-disposition']).toContain('attachment;');
+      expect(res.body[0]).toBe(0x1f);
+      expect(res.body[1]).toBe(0x8b); // Gzip magic header
+    });
+
+    test('POST /api/settings/backup should return encrypted binary with HBENC magic string for encrypted backup', async () => {
+      const res = await request(app).post('/api/settings/backup').send({ password: 'some-pass' });
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toBe('application/octet-stream');
+      expect(res.headers['content-disposition']).toContain('.enc');
+
+      const header = res.body.subarray(0, 5).toString();
+      expect(header).toBe('HBENC');
+    });
+
+    test('POST /api/settings/restore should fail if no file is provided', async () => {
+      const res = await request(app).post('/api/settings/restore').send({});
+      expect(res.status).toBe(400);
+      expect(res.body.error).toContain('file data is required');
+    });
+
+    test('POST /api/settings/restore should fail with PASSWORD_REQUIRED when restoring encrypted backup without password', async () => {
+      const res = await request(app).post('/api/settings/restore').send({ file: encryptedBackupBase64 });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('PASSWORD_REQUIRED');
+    });
+
+    test('POST /api/settings/restore should fail with INCORRECT_PASSWORD when restoring encrypted backup with wrong password', async () => {
+      const res = await request(app)
+        .post('/api/settings/restore')
+        .send({ file: encryptedBackupBase64, password: 'wrong-password' });
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBe('INCORRECT_PASSWORD');
+    });
+
+    test('POST /api/settings/restore should restore successfully from unencrypted backup and recover deleted category', async () => {
+      // Pre-verification: Category should not exist right now
+      let cat = db.prepare("SELECT * FROM categories WHERE name = 'BackupTestUnique'").get();
+      expect(cat).toBeUndefined();
+
+      const res = await request(app).post('/api/settings/restore').send({ file: unencryptedBackupBase64 });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      // Post-verification: Category should exist now
+      cat = db.prepare("SELECT * FROM categories WHERE name = 'BackupTestUnique'").get();
+      expect(cat).toBeDefined();
+      expect(cat.name).toBe('BackupTestUnique');
+    });
+
+    test('POST /api/settings/restore should restore successfully from encrypted backup with correct password', async () => {
+      // Delete the category again
+      db.prepare("DELETE FROM categories WHERE name = 'BackupTestUnique'").run();
+
+      let cat = db.prepare("SELECT * FROM categories WHERE name = 'BackupTestUnique'").get();
+      expect(cat).toBeUndefined();
+
+      const res = await request(app)
+        .post('/api/settings/restore')
+        .send({ file: encryptedBackupBase64, password: BACKUP_PASS });
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+
+      // Post-verification
+      cat = db.prepare("SELECT * FROM categories WHERE name = 'BackupTestUnique'").get();
+      expect(cat).toBeDefined();
+      expect(cat.name).toBe('BackupTestUnique');
+
+      // Cleanup
+      db.prepare("DELETE FROM categories WHERE name = 'BackupTestUnique'").run();
+    });
+  });
 });
