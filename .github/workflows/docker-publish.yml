@@ -9,7 +9,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  # This sets the image name to owner/repo (e.g., ghcr.io/username/home-todo)
+  # This sets the image name to owner/repo (e.g., ghcr.io/username/homeboard)
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
