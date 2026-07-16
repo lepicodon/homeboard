@@ -1,5 +1,5 @@
 {
-  "name": "home-todo",
+  "name": "homeboard",
   "version": "1.0.0",
   "description": "Simple family task tracker app with SQLite and Docker",
   "main": "server.js",
@@ -11,7 +11,7 @@
     "test": "jest"
   },
   "keywords": [
-    "todo",
+    "board",
     "family",
     "sqlite",
     "docker"

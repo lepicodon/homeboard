@@ -2,7 +2,7 @@ FROM node:22-alpine
 
 # Set production environment
 ENV NODE_ENV=production
-ENV DB_PATH=/data/todo.db
+ENV DB_PATH=/data/homeboard.db
 ENV PORT=3000
 
 # Create application directory

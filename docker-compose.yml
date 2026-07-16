@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    container_name: hometodo
+    container_name: homeboard
     restart: unless-stopped
     ports:
       - '3000:3000'
@@ -14,4 +14,4 @@ services:
       - ./data:/data
     environment:
       - PORT=3000
-      - DB_PATH=/data/todo.db
+      - DB_PATH=/data/homeboard.db
