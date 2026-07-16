@@ -228,10 +228,13 @@ if (weatherLocTableCount === 0) {
 
   // Migrate existing weather_city setting
   try {
-    const existingCity = db.prepare("SELECT value FROM settings WHERE key = 'weather_city'").get()?.value;
-    if (existingCity && existingCity.trim()) {
-      db.prepare('INSERT OR IGNORE INTO weather_locations (name, is_home) VALUES (?, 1)').run(existingCity.trim());
-      console.log(`Database: Migrated weather city "${existingCity}" to weather_locations as home.`);
+    const settingsTableExists = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='settings'").get();
+    if (settingsTableExists) {
+      const existingCity = db.prepare("SELECT value FROM settings WHERE key = 'weather_city'").get()?.value;
+      if (existingCity && existingCity.trim()) {
+        db.prepare('INSERT OR IGNORE INTO weather_locations (name, is_home) VALUES (?, 1)').run(existingCity.trim());
+        console.log(`Database: Migrated weather city "${existingCity}" to weather_locations as home.`);
+      }
     }
   } catch (err) {
     console.error('Database: Failed to migrate existing weather city:', err.message);

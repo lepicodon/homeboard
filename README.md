@@ -78,7 +78,7 @@ HomeBoard is a lightweight, responsive, and modern dashboard application built t
 ## 📂 Project Architecture
 
 ```
-home-todo/
+homeboard/
 ├── src/
 │   ├── config/
 │   │   └── db.js            # Database setup, migrations, and seeding
