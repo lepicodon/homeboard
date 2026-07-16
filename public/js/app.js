@@ -438,7 +438,10 @@ export async function fetchSidebarWeather() {
   try {
     const data = await api.getWeather(null, true);
     if (data.configured) {
-      const tempVal = Math.round(data.current.main.temp);
+      let tempVal = Math.round(data.current.main.temp);
+      if (state.weatherUnit === 'F') {
+        tempVal = Math.round((data.current.main.temp * 9) / 5 + 32);
+      }
       const descVal = data.current.weather[0].description;
       const iconCode = data.current.weather[0].icon;
       const emoji = getWeatherEmoji(iconCode);
@@ -446,7 +449,7 @@ export async function fetchSidebarWeather() {
       if (sidebarWeatherWidget) {
         sidebarWeatherWidget.innerHTML = `
           <div class="sidebar-weather-info">
-            <span class="sidebar-weather-temp">${tempVal}°C</span>
+            <span class="sidebar-weather-temp">${tempVal}°${state.weatherUnit}</span>
             <span class="sidebar-weather-desc">${descVal}</span>
           </div>
           <span class="sidebar-weather-icon">${emoji}</span>

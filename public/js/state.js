@@ -25,5 +25,6 @@ export const state = {
   currentEditingTaskId: null,
   currentDeletingItem: { type: null, id: null },
   backgroundType: 'none',
-  backgroundUrl: ''
+  backgroundUrl: '',
+  weatherUnit: localStorage.getItem('weather-unit') || 'C'
 };

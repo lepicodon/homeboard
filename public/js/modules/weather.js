@@ -143,6 +143,18 @@ export function initWeatherPageControls() {
       }
     });
   }
+
+  const weatherUnitToggle = document.getElementById('weatherUnitToggle');
+  if (weatherUnitToggle) {
+    weatherUnitToggle.textContent = `°${state.weatherUnit}`;
+    weatherUnitToggle.addEventListener('click', () => {
+      state.weatherUnit = state.weatherUnit === 'C' ? 'F' : 'C';
+      localStorage.setItem('weather-unit', state.weatherUnit);
+      weatherUnitToggle.textContent = `°${state.weatherUnit}`;
+      fetchWeather();
+      fetchSidebarWeather();
+    });
+  }
 }
 
 export function renderWeatherDashboard(data) {
@@ -165,7 +177,14 @@ export function renderWeatherDashboard(data) {
   if (!weatherDashboard || !weatherUnconfiguredState) return;
 
   if (data.configured) {
-    const tempVal = Math.round(data.current.main.temp);
+    const convertTemp = (tempC) => {
+      if (state.weatherUnit === 'F') {
+        return Math.round((tempC * 9) / 5 + 32);
+      }
+      return Math.round(tempC);
+    };
+
+    const tempVal = convertTemp(data.current.main.temp);
     const descVal = data.current.weather[0].description;
     const iconCode = data.current.weather[0].icon;
     const emoji = getWeatherEmoji(iconCode);
@@ -178,15 +197,20 @@ export function renderWeatherDashboard(data) {
     }
 
     if (weatherTemp) weatherTemp.textContent = tempVal;
+    const tempUnitEl = document.querySelector('.weather-large-temp .temp-unit');
+    if (tempUnitEl) tempUnitEl.textContent = `°${state.weatherUnit}`;
+
     if (weatherIcon) weatherIcon.textContent = emoji;
     if (weatherDesc) weatherDesc.textContent = descVal;
 
     if (weatherFeelsLike) {
-      const feels = Math.round(data.current.main.feels_like);
+      const feels = convertTemp(data.current.main.feels_like);
       let comfort = 'Similar to actual';
-      if (feels > tempVal + 1) comfort = 'Warmer than actual';
-      else if (feels < tempVal - 1) comfort = 'Cooler than actual';
-      weatherFeelsLike.innerHTML = `${feels}°C <span class="detail-sub">${comfort}</span>`;
+      const rawTemp = Math.round(data.current.main.temp);
+      const rawFeels = Math.round(data.current.main.feels_like);
+      if (rawFeels > rawTemp + 1) comfort = 'Warmer than actual';
+      else if (rawFeels < rawTemp - 1) comfort = 'Cooler than actual';
+      weatherFeelsLike.innerHTML = `${feels}°${state.weatherUnit} <span class="detail-sub">${comfort}</span>`;
     }
     if (weatherWind) {
       const speed = Math.round(data.current.wind.speed * 3.6);
@@ -225,7 +249,7 @@ export function renderWeatherDashboard(data) {
         const localHour = formatOffsetTime(item.dt, timezoneOffset);
         const hourPart = localHour.split(':')[0] + ' ' + localHour.split(' ')[1];
         const hourlyEmoji = getWeatherEmoji(item.weather[0].icon);
-        const hourlyTempText = `${Math.round(item.main.temp)}°`;
+        const hourlyTempText = `${convertTemp(item.main.temp)}°`;
         const rainPop = item.pop ? Math.round(item.pop * 100) : 0;
 
         const itemEl = document.createElement('div');
@@ -277,8 +301,8 @@ export function renderWeatherDashboard(data) {
           <span class="forecast-day">${day}</span>
           <span class="forecast-icon">${forecastEmoji}</span>
           <div class="forecast-temp">
-            <span class="forecast-temp-max">${Math.round(maxTemp)}°</span>
-            <span class="forecast-temp-min">${Math.round(minTemp)}°</span>
+            <span class="forecast-temp-max">${convertTemp(maxTemp)}°</span>
+            <span class="forecast-temp-min">${convertTemp(minTemp)}°</span>
           </div>
         `;
         weatherForecastGrid.appendChild(itemEl);

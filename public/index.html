@@ -444,6 +444,15 @@
                   >
                     🗑️
                   </button>
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-icon-sm"
+                    id="weatherUnitToggle"
+                    title="Toggle Temperature Unit"
+                    style="font-weight: bold;"
+                  >
+                    °C
+                  </button>
                 </div>
               </div>
               <p class="header-subtitle" id="weatherUpdateTime">Current conditions and 5-day forecast</p>
@@ -460,31 +469,31 @@
                   <div id="weatherDesc">Clear Sky</div>
                 </div>
               </div>
-              <div class="weather-details-grid">
-                <div class="weather-detail-item">
-                  <span class="detail-label">🌡️ Feels Like</span>
-                  <span class="detail-value" id="weatherFeelsLike">--</span>
-                </div>
-                <div class="weather-detail-item">
-                  <span class="detail-label">💨 Wind</span>
-                  <span class="detail-value" id="weatherWind">--</span>
-                </div>
-                <div class="weather-detail-item">
-                  <span class="detail-label">💧 Humidity</span>
-                  <span class="detail-value" id="weatherHumidity">--</span>
-                </div>
-                <div class="weather-detail-item">
-                  <span class="detail-label">🌅 Sun Cycle</span>
-                  <span class="detail-value" id="weatherSunCycle">--</span>
-                </div>
-                <div class="weather-detail-item">
-                  <span class="detail-label">☁️ Clouds</span>
-                  <span class="detail-value" id="weatherClouds">--</span>
-                </div>
-                <div class="weather-detail-item">
-                  <span class="detail-label">🧭 Pressure</span>
-                  <span class="detail-value" id="weatherPressure">--</span>
-                </div>
+
+              <!-- Detail Items (Direct siblings for grid layout) -->
+              <div class="weather-detail-item">
+                <span class="detail-label">🌡️ Feels Like</span>
+                <span class="detail-value" id="weatherFeelsLike">--</span>
+              </div>
+              <div class="weather-detail-item">
+                <span class="detail-label">💨 Wind</span>
+                <span class="detail-value" id="weatherWind">--</span>
+              </div>
+              <div class="weather-detail-item">
+                <span class="detail-label">💧 Humidity</span>
+                <span class="detail-value" id="weatherHumidity">--</span>
+              </div>
+              <div class="weather-detail-item">
+                <span class="detail-label">🌅 Sun Cycle</span>
+                <span class="detail-value" id="weatherSunCycle">--</span>
+              </div>
+              <div class="weather-detail-item">
+                <span class="detail-label">☁️ Clouds</span>
+                <span class="detail-value" id="weatherClouds">--</span>
+              </div>
+              <div class="weather-detail-item">
+                <span class="detail-label">🧭 Pressure</span>
+                <span class="detail-value" id="weatherPressure">--</span>
               </div>
             </div>
 
