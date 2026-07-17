@@ -6,6 +6,8 @@ HomeBoard is a lightweight, responsive, and modern dashboard application built t
 
 See more previews in <a href="SCREENSHOTS.md">SCREENSHOTS.md</a>.  
 
+*Built with the help of Antigravity, using Gemini 3.5 Flash.*
+
 ---
 
 ## 🌟 Key Features
