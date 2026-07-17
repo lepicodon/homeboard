@@ -220,3 +220,9 @@ All API endpoints are prefixed with `/api` and are rate-limited. If Access Prote
   ```bash
   npm run format
   ```
+
+---
+
+## Release Notes
+
+v0.1 - 1st tagged version
