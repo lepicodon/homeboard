@@ -417,7 +417,8 @@ weatherRouter.get('/', async (req, res) => {
 // POST DB Backup
 settingsRouter.post('/backup', async (req, res) => {
   const { password } = req.body;
-  const tempPath = path.join(__dirname, '..', '..', `temp_backup_${Date.now()}.db`);
+  const dbDir = path.dirname(db.name);
+  const tempPath = path.join(dbDir, `temp_backup_${Date.now()}.db`);
   try {
     await db.backup(tempPath);
     const dbBuffer = fs.readFileSync(tempPath);
@@ -465,7 +466,8 @@ settingsRouter.post('/restore', async (req, res) => {
     return res.status(400).json({ error: 'Backup file data is required.' });
   }
 
-  const tempRestorePath = path.join(__dirname, '..', '..', `temp_restore_${Date.now()}.db`);
+  const dbDir = path.dirname(db.name);
+  const tempRestorePath = path.join(dbDir, `temp_restore_${Date.now()}.db`);
   try {
     const fileBuffer = Buffer.from(file, 'base64');
     let decryptedBuffer;
