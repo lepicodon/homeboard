@@ -314,10 +314,12 @@ body {
 /* Main Content Styling */
 .main-content {
   flex-grow: 1;
+  min-width: 0;
+  width: calc(100% - 280px);
   margin-left: 280px;
   padding: 40px;
   min-height: 100vh;
-  transition: margin-left var(--transition-normal);
+  transition: margin-left var(--transition-normal), width var(--transition-normal);
 }
 
 /* Pages */
@@ -1991,6 +1993,7 @@ dialog[open]::backdrop {
 
   .main-content {
     margin-left: 0;
+    width: 100%;
     padding: 20px;
   }
 
@@ -2137,11 +2140,11 @@ dialog[open]::backdrop {
     box-shadow: none !important;
     margin: 0 !important;
     padding: 12px 0 !important;
-    display: flex;
-    flex-direction: row !important;
+    display: grid !important;
+    grid-template-columns: auto 1fr auto !important;
+    grid-template-rows: auto auto !important;
     align-items: center !important;
-    justify-content: space-between !important;
-    gap: 16px !important;
+    gap: 6px 16px !important;
   }
 
   .tasks-grid.list-view .task-card:not(:last-child) {
@@ -2154,11 +2157,11 @@ dialog[open]::backdrop {
 
   .tasks-grid.list-view .task-header {
     margin-bottom: 0 !important;
-    flex-direction: row !important;
+    grid-column: 1 !important;
+    grid-row: 1 / span 2 !important;
+    display: flex !important;
     align-items: center !important;
-    gap: 12px !important;
-    flex-shrink: 0 !important;
-    order: -1 !important;
+    justify-content: center !important;
   }
 
   .tasks-grid.list-view .task-tags {
@@ -2166,32 +2169,45 @@ dialog[open]::backdrop {
   }
 
   .tasks-grid.list-view .task-body {
-    flex-grow: 1 !important;
-    gap: 4px !important;
+    grid-column: 2 !important;
+    grid-row: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    min-width: 0 !important;
   }
 
   .tasks-grid.list-view .task-title {
     font-size: 15px !important;
-    font-weight: 500 !important;
+    font-weight: 600 !important;
+    color: var(--text-primary) !important;
+    line-height: 1.4 !important;
+    word-break: break-word !important;
   }
 
   .tasks-grid.list-view .task-desc {
     font-size: 13px !important;
+    color: var(--text-muted) !important;
     display: -webkit-box;
     -webkit-line-clamp: 1;
     -webkit-box-orient: vertical;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-top: 2px !important;
   }
 
   .tasks-grid.list-view .task-meta {
+    grid-column: 2 !important;
+    grid-row: 2 !important;
     border-top: none !important;
     padding-top: 0 !important;
-    margin-top: 0 !important;
-    flex-shrink: 0 !important;
+    margin-top: 2px !important;
+    display: flex !important;
     flex-direction: row !important;
     align-items: center !important;
+    justify-content: flex-start !important;
     gap: 8px !important;
+    flex-wrap: wrap !important;
   }
 
   .tasks-grid.list-view .task-meta .meta-row {
@@ -2208,9 +2224,14 @@ dialog[open]::backdrop {
   }
 
   .tasks-grid.list-view .task-footer {
-    opacity: 1 !important;
-    flex-shrink: 0 !important;
-    gap: 4px !important;
+    grid-column: 3 !important;
+    grid-row: 1 / span 2 !important;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+    justify-content: flex-end !important;
+    align-self: center !important;
   }
 
   .tasks-grid.list-view .btn-action {
@@ -2865,6 +2886,7 @@ dialog[open]::backdrop {
 
   .app-container.sidebar-collapsed .main-content {
     margin-left: 76px;
+    width: calc(100% - 76px);
   }
 
   .app-container.sidebar-collapsed .sidebar .logo-text,

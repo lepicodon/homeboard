@@ -2,6 +2,10 @@
 
 HomeBoard is a lightweight, responsive, and modern dashboard application built to organize household chores, share sticky note memos, and manage family shopping lists. It runs seamlessly on desktop, tablet, and mobile devices with full light/dark theme support.
 
+<img src="screens/desktop_dark_tasks.png" width="400" alt="Desktop Dark Tasks">  
+
+See more previews in <a href="SCREENSHOTS.md">SCREENSHOTS.md</a>.  
+
 ---
 
 ## 🌟 Key Features
