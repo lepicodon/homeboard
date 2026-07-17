@@ -1,5 +1,5 @@
 services:
-  app:
+  homeboard:
     build: .
     # comment the build and use the published image instead
     # image: ghcr.io/lepicodon/homeboard:latest
