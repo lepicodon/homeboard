@@ -14,7 +14,7 @@ services:
       - PORT=3000
       - DB_PATH=/data/homeboard.db
     # labels:
-      # - traefik.enable=true
+    # - traefik.enable=true
 
 volumes:
   homeboard-data:

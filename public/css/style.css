@@ -319,7 +319,9 @@ body {
   margin-left: 280px;
   padding: 40px;
   min-height: 100vh;
-  transition: margin-left var(--transition-normal), width var(--transition-normal);
+  transition:
+    margin-left var(--transition-normal),
+    width var(--transition-normal);
 }
 
 /* Pages */

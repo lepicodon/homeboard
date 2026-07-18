@@ -416,7 +416,8 @@ weatherRouter.get('/', async (req, res) => {
 
 // POST DB Backup
 settingsRouter.post('/backup', async (req, res) => {
-  const { password } = req.body;
+  const { password, compress } = req.body;
+  const shouldCompress = compress !== false;
   const dbDir = path.dirname(db.name);
   const tempPath = path.join(dbDir, `temp_backup_${Date.now()}.db`);
   try {
@@ -426,16 +427,21 @@ settingsRouter.post('/backup', async (req, res) => {
       fs.unlinkSync(tempPath);
     }
 
-    const compressed = zlib.gzipSync(dbBuffer);
-    let finalBuffer = compressed;
-    let filename = `homeboard_backup_${new Date().toISOString().slice(0, 10)}.db.gz`;
+    const processedBuffer = shouldCompress ? zlib.gzipSync(dbBuffer) : dbBuffer;
+    let finalBuffer = processedBuffer;
+    let filename = `homeboard_backup_${new Date().toISOString().slice(0, 10)}`;
+    if (shouldCompress) {
+      filename += '.db.gz';
+    } else {
+      filename += '.db';
+    }
 
     if (password && password.trim()) {
       const salt = crypto.randomBytes(16);
       const key = crypto.scryptSync(password.trim(), salt, 32, { N: 16384, r: 8, p: 1 });
       const iv = crypto.randomBytes(12);
       const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-      const ciphertext = Buffer.concat([cipher.update(compressed), cipher.final()]);
+      const ciphertext = Buffer.concat([cipher.update(processedBuffer), cipher.final()]);
       const authTag = cipher.getAuthTag();
 
       const header = Buffer.from('HBENC');
@@ -496,10 +502,14 @@ settingsRouter.post('/restore', async (req, res) => {
     }
 
     let dbBuffer;
-    try {
-      dbBuffer = zlib.gunzipSync(decryptedBuffer);
-    } catch {
-      return res.status(400).json({ error: 'Invalid file format. Ensure it is a valid backup file.' });
+    if (decryptedBuffer[0] === 0x1f && decryptedBuffer[1] === 0x8b) {
+      try {
+        dbBuffer = zlib.gunzipSync(decryptedBuffer);
+      } catch {
+        return res.status(400).json({ error: 'Failed to decompress backup file.' });
+      }
+    } else {
+      dbBuffer = decryptedBuffer;
     }
 
     if (dbBuffer.subarray(0, 16).toString() !== 'SQLite format 3\0') {

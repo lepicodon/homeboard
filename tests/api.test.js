@@ -242,5 +242,34 @@ describe('API Integration Tests', () => {
       // Cleanup
       db.prepare("DELETE FROM categories WHERE name = 'BackupTestUnique'").run();
     });
+
+    test('POST /api/settings/backup with compress=false should return raw database file', async () => {
+      const res = await request(app).post('/api/settings/backup').send({ password: '', compress: false });
+      expect(res.status).toBe(200);
+      expect(res.headers['content-type']).toBe('application/octet-stream');
+      expect(res.headers['content-disposition']).not.toContain('.gz');
+      expect(res.body.subarray(0, 16).toString()).toBe('SQLite format 3\0');
+    });
+
+    test('POST /api/settings/restore should restore successfully from uncompressed backup', async () => {
+      db.prepare("INSERT OR IGNORE INTO categories (name, color) VALUES ('BackupTestRaw', '#ffffff')").run();
+      const resBackup = await request(app).post('/api/settings/backup').send({ password: '', compress: false });
+      expect(resBackup.status).toBe(200);
+      const rawBase64 = resBackup.body.toString('base64');
+
+      db.prepare("DELETE FROM categories WHERE name = 'BackupTestRaw'").run();
+      let cat = db.prepare("SELECT * FROM categories WHERE name = 'BackupTestRaw'").get();
+      expect(cat).toBeUndefined();
+
+      const resRestore = await request(app).post('/api/settings/restore').send({ file: rawBase64 });
+      expect(resRestore.status).toBe(200);
+      expect(resRestore.body.success).toBe(true);
+
+      cat = db.prepare("SELECT * FROM categories WHERE name = 'BackupTestRaw'").get();
+      expect(cat).toBeDefined();
+      expect(cat.name).toBe('BackupTestRaw');
+
+      db.prepare("DELETE FROM categories WHERE name = 'BackupTestRaw'").run();
+    });
   });
 });

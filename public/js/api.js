@@ -333,11 +333,11 @@ export const api = {
     return res.json();
   },
 
-  async downloadBackup(password) {
+  async downloadBackup(password, compress = true) {
     const res = await customFetch('/api/settings/backup', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ password })
+      body: JSON.stringify({ password, compress })
     });
     if (!res.ok) {
       const err = await res.json();

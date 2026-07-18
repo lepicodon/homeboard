@@ -825,6 +825,7 @@ export function initWeatherSettingsEvents() {
 }
 
 export function initBackupEvents() {
+  const compressBackup = document.getElementById('compressBackup');
   const encryptBackup = document.getElementById('encryptBackup');
   const backupPasswordGroup = document.getElementById('backupPasswordGroup');
   const backupPassword = document.getElementById('backupPassword');
@@ -859,11 +860,13 @@ export function initBackupEvents() {
   if (backupForm) {
     backupForm.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const passwordVal = encryptBackup.checked ? backupPassword.value : '';
-      if (encryptBackup.checked && !passwordVal) {
+      const passwordVal = encryptBackup && encryptBackup.checked ? backupPassword.value : '';
+      if (encryptBackup && encryptBackup.checked && !passwordVal) {
         alert('Please enter a password for the encrypted backup.');
         return;
       }
+
+      const compressVal = compressBackup ? compressBackup.checked : true;
 
       const downloadBackupBtn = document.getElementById('downloadBackupBtn');
       const originalText = downloadBackupBtn.textContent;
@@ -871,13 +874,22 @@ export function initBackupEvents() {
       downloadBackupBtn.disabled = true;
 
       try {
-        const blob = await api.downloadBackup(passwordVal);
+        const blob = await api.downloadBackup(passwordVal, compressVal);
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
 
         const dateStr = new Date().toISOString().slice(0, 10);
-        a.download = `homeboard_backup_${dateStr}.db.gz` + (passwordVal ? '.enc' : '');
+        let filename = `homeboard_backup_${dateStr}`;
+        if (compressVal) {
+          filename += '.db.gz';
+        } else {
+          filename += '.db';
+        }
+        if (passwordVal) {
+          filename += '.enc';
+        }
+        a.download = filename;
 
         document.body.appendChild(a);
         a.click();
