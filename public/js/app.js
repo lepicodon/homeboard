@@ -1,5 +1,6 @@
 import { state } from './state.js';
 import { api } from './api.js';
+import { showToast } from './utils.js';
 import { renderTasks, initFilters, initModals, initPaginationEvents, handlePrintChecklist } from './modules/tasks.js';
 import { renderCalendar, initCalendarControls } from './modules/calendar.js';
 import { renderMemos, initMemosEvents } from './modules/memos.js';
@@ -269,6 +270,10 @@ export function confirmDelete(type, id, displayName) {
     deleteMessage.textContent = `Are you sure you want to delete this memo note?`;
   } else if (type === 'shoppingCategory') {
     deleteMessage.textContent = `Are you sure you want to delete the shopping category "${displayName}"? Items in this category will become uncategorized.`;
+  } else if (type === 'shoppingList') {
+    deleteMessage.textContent = `Are you sure you want to delete the shopping list "${displayName}"? This will delete all its items too and cannot be undone.`;
+  } else if (type === 'weatherLocation') {
+    deleteMessage.textContent = `Are you sure you want to delete the weather location "${displayName}"?`;
   }
 
   deleteConfirmModal.showModal();
@@ -289,6 +294,16 @@ async function executeDelete() {
       await api.deleteMemo(id);
     } else if (type === 'shoppingCategory') {
       await api.deleteShoppingCategory(id);
+    } else if (type === 'shoppingList') {
+      await api.deleteShoppingList(id);
+      if (state.activeShoppingListId === id) {
+        state.activeShoppingListId = 1;
+      }
+    } else if (type === 'weatherLocation') {
+      await api.deleteWeatherLocation(id);
+      if (state.activeWeatherLocationId === id) {
+        state.activeWeatherLocationId = null;
+      }
     }
 
     const deleteConfirmModal = document.getElementById('deleteConfirmModal');
@@ -307,10 +322,17 @@ async function executeDelete() {
     } else if (type === 'shoppingCategory') {
       await fetchShoppingCategories();
       fetchShopping();
+    } else if (type === 'shoppingList') {
+      await fetchShoppingLists();
+      fetchShopping();
+    } else if (type === 'weatherLocation') {
+      await fetchWeatherLocations();
+      fetchWeather();
+      await fetchSidebarWeather();
     }
   } catch (err) {
     console.error('Error deleting item:', err);
-    alert('Failed to delete item.');
+    showToast('Failed to delete item.', 'error');
   }
 }
 

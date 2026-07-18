@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { api } from '../api.js';
-import { escapeHTML } from '../utils.js';
+import { escapeHTML, showToast } from '../utils.js';
 import {
   fetchCategories,
   fetchMembers,
@@ -77,7 +77,7 @@ export async function handleCategoryFormSubmit(e) {
     fetchTasks();
   } catch (err) {
     console.error('Error saving category:', err);
-    alert(err.message || 'Failed to save category');
+    showToast(err.message || 'Failed to save category', 'error');
   }
 }
 
@@ -217,7 +217,7 @@ export async function handleMemberFormSubmit(e) {
     fetchTasks();
   } catch (err) {
     console.error('Error saving member:', err);
-    alert(err.message || 'Failed to save family member');
+    showToast(err.message || 'Failed to save family member', 'error');
   }
 }
 
@@ -345,7 +345,7 @@ export async function handleShoppingCategoryFormSubmit(e) {
     fetchShopping();
   } catch (err) {
     console.error('Error saving shopping category:', err);
-    alert(err.message || 'Failed to save category.');
+    showToast(err.message || 'Failed to save category.', 'error');
   }
 }
 
@@ -398,7 +398,7 @@ export function initAvatarUpload() {
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Please upload an image file.');
+      showToast('Please upload an image file.', 'warn');
       return;
     }
 
@@ -482,10 +482,10 @@ export function initSystemSettingsEvents() {
         });
         await fetchSettings();
         fetchTasks();
-        alert('System settings saved successfully!');
+        showToast('System settings saved successfully!', 'success');
       } catch (err) {
         console.error('Error saving settings:', err);
-        alert('Failed to save settings.');
+        showToast('Failed to save settings.', 'error');
       }
     });
   }
@@ -579,7 +579,7 @@ export function initBackgroundEvents() {
     importBackgroundUrlBtn.addEventListener('click', async () => {
       const url = settingBackgroundUrl.value.trim();
       if (!url) {
-        alert('Please enter a valid image URL.');
+        showToast('Please enter a valid image URL.', 'warn');
         return;
       }
 
@@ -623,12 +623,12 @@ export function initBackgroundEvents() {
           if (clearBackgroundBtn) clearBackgroundBtn.classList.remove('hidden');
 
           backgroundSettingsForm.dataset.pendingImage = optimizedBase64;
-          alert('Image imported and optimized successfully! Click "Apply Wallpaper Mode" to save.');
+          showToast('Image imported and optimized successfully! Click "Apply Wallpaper Mode" to save.', 'success');
         };
         img.src = imgUrl;
       } catch (err) {
         console.error('Error importing image URL:', err);
-        alert('Failed to import image URL: ' + err.message);
+        showToast('Failed to import image URL: ' + err.message, 'error');
       } finally {
         importBackgroundUrlBtn.disabled = false;
         importBackgroundUrlBtn.textContent = 'Import';
@@ -682,10 +682,10 @@ export function initBackgroundEvents() {
         });
 
         await fetchSettings();
-        alert('Background settings saved successfully!');
+        showToast('Background settings saved successfully!', 'success');
       } catch (err) {
         console.error('Error saving background settings:', err);
-        alert('Failed to save background settings.');
+        showToast('Failed to save background settings.', 'error');
       }
     });
   }
@@ -764,7 +764,7 @@ export function initPasswordEvents() {
       const password = settingAppPassword ? settingAppPassword.value.trim() : '';
 
       if (enabled && !password) {
-        alert('Please enter a password to enable password protection.');
+        showToast('Please enter a password to enable password protection.', 'warn');
         return;
       }
 
@@ -786,10 +786,10 @@ export function initPasswordEvents() {
           localStorage.removeItem('app_password');
         }
 
-        alert('Password settings saved successfully!');
+        showToast('Password settings saved successfully!', 'success');
       } catch (err) {
         console.error('Error saving password settings:', err);
-        alert('Failed to save password settings.');
+        showToast('Failed to save password settings.', 'error');
       }
     });
   }
@@ -815,10 +815,10 @@ export function initWeatherSettingsEvents() {
           background_url: currentSettings.background_url
         });
         await fetchSettings();
-        alert('Weather settings saved successfully!');
+        showToast('Weather settings saved successfully!', 'success');
       } catch (err) {
         console.error('Error saving weather settings:', err);
-        alert('Failed to save weather settings.');
+        showToast('Failed to save weather settings.', 'error');
       }
     });
   }
@@ -862,7 +862,7 @@ export function initBackupEvents() {
       e.preventDefault();
       const passwordVal = encryptBackup && encryptBackup.checked ? backupPassword.value : '';
       if (encryptBackup && encryptBackup.checked && !passwordVal) {
-        alert('Please enter a password for the encrypted backup.');
+        showToast('Please enter a password for the encrypted backup.', 'warn');
         return;
       }
 
@@ -897,7 +897,7 @@ export function initBackupEvents() {
         window.URL.revokeObjectURL(url);
       } catch (err) {
         console.error('Backup download error:', err);
-        alert(err.message || 'Failed to generate backup.');
+        showToast(err.message || 'Failed to generate backup.', 'error');
       } finally {
         downloadBackupBtn.textContent = originalText;
         downloadBackupBtn.disabled = false;
@@ -910,7 +910,7 @@ export function initBackupEvents() {
     restoreForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!restoreFileInput.files || restoreFileInput.files.length === 0) {
-        alert('Please select a backup file to restore.');
+        showToast('Please select a backup file to restore.', 'warn');
         return;
       }
 
@@ -964,7 +964,7 @@ export function initBackupEvents() {
     confirmRestoreBtn.addEventListener('click', async () => {
       const passwordVal = fileIsEncrypted ? restorePassword.value : '';
       if (fileIsEncrypted && !passwordVal) {
-        alert('Please enter the password to decrypt the backup file.');
+        showToast('Please enter the password to decrypt the backup file.', 'warn');
         return;
       }
 
@@ -974,17 +974,19 @@ export function initBackupEvents() {
 
       try {
         await api.restoreDatabase(fileBase64ToRestore, passwordVal);
-        alert('Database restored successfully! The page will now reload.');
+        showToast('Database restored successfully! The page will now reload.', 'success');
         closeModal();
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 1500);
       } catch (err) {
         console.error('Database restore error:', err);
         if (err.message.includes('INCORRECT_PASSWORD')) {
-          alert('Incorrect password. Please try again.');
+          showToast('Incorrect password. Please try again.', 'error');
         } else if (err.message.includes('PASSWORD_REQUIRED')) {
-          alert('Password is required for this encrypted backup.');
+          showToast('Password is required for this encrypted backup.', 'error');
         } else {
-          alert(err.message || 'Failed to restore database. Ensure the file is not corrupted.');
+          showToast(err.message || 'Failed to restore database. Ensure the file is not corrupted.', 'error');
         }
       } finally {
         confirmRestoreBtn.textContent = originalText;

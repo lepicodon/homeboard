@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { api } from '../api.js';
-import { escapeHTML, formatTimestamp } from '../utils.js';
+import { escapeHTML, formatTimestamp, showToast } from '../utils.js';
 import { fetchTasks, confirmDelete } from '../app.js';
 
 export function renderTasks() {
@@ -191,7 +191,7 @@ export function createTaskCard(task) {
     <div class="task-header">
       <div class="task-tags">
         <span class="tag tag-size-${task.size}">${sizeLabels[task.size]}</span>
-        ${task.category_name ? `<span class="tag tag-category" style="--tag-cat-bg: ${task.category_color}1a; --tag-cat-fg: ${task.category_color}">${task.category_name}</span>` : ''}
+        ${task.category_name ? `<span class="tag tag-category" style="--tag-cat-bg: ${task.category_color}1a; --tag-cat-fg: ${task.category_color}">${escapeHTML(task.category_name)}</span>` : ''}
         ${recurrenceHTML}
       </div>
       <div class="task-check-wrapper">
@@ -360,7 +360,7 @@ export async function handleTaskFormSubmit(e) {
     fetchTasks();
   } catch (err) {
     console.error('Error saving task:', err);
-    alert(err.message || 'Failed to save task.');
+    showToast(err.message || 'Failed to save task.', 'error');
   }
 }
 

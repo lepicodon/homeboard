@@ -1,7 +1,7 @@
 import { state } from '../state.js';
 import { api } from '../api.js';
-import { escapeHTML } from '../utils.js';
-import { fetchShopping, fetchShoppingLists } from '../app.js';
+import { escapeHTML, showToast } from '../utils.js';
+import { fetchShopping, fetchShoppingLists, confirmDelete } from '../app.js';
 
 export function renderShopping() {
   const shoppingListContainer = document.getElementById('shoppingListContainer');
@@ -142,7 +142,7 @@ export async function handleShoppingItemFormSubmit(e) {
     fetchShopping();
   } catch (err) {
     console.error('Error adding shopping item:', err);
-    alert('Failed to add shopping item.');
+    showToast('Failed to add shopping item.', 'error');
   }
 }
 
@@ -353,34 +353,21 @@ export function initShoppingListsEvents() {
         await fetchShoppingLists();
         fetchShopping();
       } catch (err) {
-        alert(err.message);
+        showToast(err.message || 'Failed to save shopping list.', 'error');
       }
     });
   }
 
   if (deleteShoppingListBtn) {
-    deleteShoppingListBtn.addEventListener('click', async () => {
+    deleteShoppingListBtn.addEventListener('click', () => {
       if (state.activeShoppingListId === 1) {
-        alert('The default shopping list cannot be deleted.');
+        showToast('The default shopping list cannot be deleted.', 'warn');
         return;
       }
       const activeList = state.shoppingLists.find((l) => l.id === state.activeShoppingListId);
       const listName = activeList ? activeList.name : 'this list';
 
-      if (
-        confirm(
-          `Are you sure you want to delete the shopping list "${listName}"? This will delete all its items too and cannot be undone.`
-        )
-      ) {
-        try {
-          await api.deleteShoppingList(state.activeShoppingListId);
-          state.activeShoppingListId = 1;
-          await fetchShoppingLists();
-          fetchShopping();
-        } catch (err) {
-          alert(err.message);
-        }
-      }
+      confirmDelete('shoppingList', state.activeShoppingListId, listName);
     });
   }
 }

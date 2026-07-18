@@ -573,5 +573,79 @@ describe('API Integration Tests', () => {
         db.prepare("DELETE FROM categories WHERE name = 'DuplicateCat'").run();
       });
     });
+
+    describe('Shopping & Memos CRUD Operations', () => {
+      test('should support memo CRUD lifecycle', async () => {
+        // Create
+        const resCreate = await request(app)
+          .post('/api/memos')
+          .send({ content: 'CRUD Test Memo Content', color: '#ff00ff', event_date: '2026-07-20' });
+        expect(resCreate.status).toBe(201);
+        const memoId = resCreate.body.id;
+
+        // List
+        const resList = await request(app).get('/api/memos');
+        const found = resList.body.find(m => m.id === memoId);
+        expect(found).toBeDefined();
+        expect(found.content).toBe('CRUD Test Memo Content');
+
+        // Update
+        const resUpdate = await request(app)
+          .put(`/api/memos/${memoId}`)
+          .send({ content: 'CRUD Test Memo Content Updated', color: '#00ffff' });
+        expect(resUpdate.status).toBe(200);
+        expect(resUpdate.body.content).toBe('CRUD Test Memo Content Updated');
+
+        // Delete
+        const resDelete = await request(app).delete(`/api/memos/${memoId}`);
+        expect(resDelete.status).toBe(200);
+      });
+
+      test('should support shopping list and items CRUD lifecycle', async () => {
+        // Create List
+        const resListCreate = await request(app)
+          .post('/api/shopping/lists')
+          .send({ name: 'CRUD Test Shopping List' });
+        expect(resListCreate.status).toBe(201);
+        const listId = resListCreate.body.id;
+
+        // List lists
+        const resLists = await request(app).get('/api/shopping/lists');
+        const foundList = resLists.body.find(l => l.id === listId);
+        expect(foundList).toBeDefined();
+        expect(foundList.name).toBe('CRUD Test Shopping List');
+
+        // Create Item in List
+        const resItemCreate = await request(app)
+          .post('/api/shopping')
+          .send({ name: 'Apples', quantity: '3 bags', category: 'Fruit', list_id: listId });
+        expect(resItemCreate.status).toBe(201);
+        const itemId = resItemCreate.body.id;
+
+        // List Items
+        const resItems = await request(app).get(`/api/shopping?list_id=${listId}`);
+        const foundItem = resItems.body.find(i => i.id === itemId);
+        expect(foundItem).toBeDefined();
+        expect(foundItem.name).toBe('Apples');
+
+        // Toggle Item checked status
+        const resToggle = await request(app).patch(`/api/shopping/${itemId}/toggle`);
+        expect(resToggle.status).toBe(200);
+        expect(resToggle.body.checked).toBe(true);
+
+        // Clear completed items
+        const resClear = await request(app).post(`/api/shopping/clear-completed?list_id=${listId}`);
+        expect(resClear.status).toBe(200);
+
+        // Verify item is deleted because it was cleared
+        const resItemsAfter = await request(app).get(`/api/shopping?list_id=${listId}`);
+        const foundItemAfter = resItemsAfter.body.find(i => i.id === itemId);
+        expect(foundItemAfter).toBeUndefined();
+
+        // Delete List
+        const resListDelete = await request(app).delete(`/api/shopping/lists/${listId}`);
+        expect(resListDelete.status).toBe(200);
+      });
+    });
   });
 });

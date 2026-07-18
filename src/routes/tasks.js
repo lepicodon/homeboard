@@ -26,10 +26,12 @@ function getTaskById(id) {
     WHERE t.id = ?
   `;
   const task = db.prepare(query).get(id);
-  if (task) {
-    task.assignees = JSON.parse(task.assignees);
+    try {
+      task.assignees = JSON.parse(task.assignees || '[]');
+    } catch {
+      task.assignees = [];
+    }
     task.completed = !!task.completed;
-  }
   return task;
 }
 
@@ -140,7 +142,11 @@ router.get('/', asyncHandler(async (req, res) => {
   }
 
   const formattedTasks = tasks.map((task) => {
-    task.assignees = JSON.parse(task.assignees);
+    try {
+      task.assignees = JSON.parse(task.assignees || '[]');
+    } catch {
+      task.assignees = [];
+    }
     task.completed = !!task.completed;
     return task;
   });

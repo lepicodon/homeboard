@@ -1,4 +1,4 @@
-function errorHandler(err, req, res, next) {
+function errorHandler(err, req, res, _next) {
   console.error('[Error Handler] Caught error:', err);
 
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;

@@ -1,6 +1,6 @@
 import { state } from '../state.js';
 import { api } from '../api.js';
-import { escapeHTML, formatTimestamp } from '../utils.js';
+import { escapeHTML, formatTimestamp, showToast } from '../utils.js';
 import { fetchMemos, confirmDelete } from '../app.js';
 
 export function renderMemos() {
@@ -108,7 +108,7 @@ export async function handleMemoFormSubmit(e) {
     fetchMemos();
   } catch (err) {
     console.error('Error saving memo:', err);
-    alert('Failed to save memo');
+    showToast('Failed to save memo', 'error');
   }
 }
 

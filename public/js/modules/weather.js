@@ -1,6 +1,7 @@
 import { state } from '../state.js';
 import { api } from '../api.js';
-import { fetchWeather, fetchWeatherLocations, fetchSidebarWeather } from '../app.js';
+import { fetchWeather, fetchWeatherLocations, fetchSidebarWeather, confirmDelete } from '../app.js';
+import { showToast } from '../utils.js';
 
 export function renderWeatherLocationsDropdown() {
   const weatherLocationSelector = document.getElementById('weatherLocationSelector');
@@ -106,28 +107,18 @@ export function initWeatherPageControls() {
         await fetchWeatherLocations();
         fetchWeather();
       } catch (err) {
-        alert(err.message || 'Failed to add weather location.');
+        showToast(err.message || 'Failed to add weather location.', 'error');
       }
     });
   }
 
   if (deleteWeatherLocationBtn) {
-    deleteWeatherLocationBtn.addEventListener('click', async () => {
+    deleteWeatherLocationBtn.addEventListener('click', () => {
       if (!state.activeWeatherLocationId) return;
       const activeLoc = state.weatherLocations.find((l) => l.id === state.activeWeatherLocationId);
       const locName = activeLoc ? activeLoc.name : 'this location';
 
-      if (confirm(`Are you sure you want to delete the weather location "${locName}"?`)) {
-        try {
-          await api.deleteWeatherLocation(state.activeWeatherLocationId);
-          state.activeWeatherLocationId = null;
-          await fetchWeatherLocations();
-          fetchWeather();
-          await fetchSidebarWeather();
-        } catch (err) {
-          alert(err.message || 'Failed to delete weather location.');
-        }
-      }
+      confirmDelete('weatherLocation', state.activeWeatherLocationId, locName);
     });
   }
 
@@ -139,7 +130,7 @@ export function initWeatherPageControls() {
         await fetchWeatherLocations();
         await fetchSidebarWeather();
       } catch (err) {
-        alert(err.message || 'Failed to set home weather location.');
+        showToast(err.message || 'Failed to set home weather location.', 'error');
       }
     });
   }

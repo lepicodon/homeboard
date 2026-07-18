@@ -15,12 +15,14 @@ module.exports = [
         alert: 'readonly',
         confirm: 'readonly',
         setTimeout: 'readonly',
+        clearTimeout: 'readonly',
         // Node.js globals
         require: 'readonly',
         module: 'readonly',
         __dirname: 'readonly',
         process: 'readonly',
         Buffer: 'readonly',
+        URL: 'readonly',
         console: 'readonly',
         // Jest globals
         describe: 'readonly',
