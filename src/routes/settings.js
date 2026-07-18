@@ -1,42 +1,43 @@
 const express = require('express');
-const settingsRouter = express.Router();
-const weatherRouter = express.Router();
+const router = express.Router();
 const db = require('../config/db');
-const { URL } = require('url');
-const crypto = require('crypto');
-const zlib = require('zlib');
 const path = require('path');
+const fs = require('fs');
+const dns = require('dns').promises;
+const http = require('http');
+const https = require('https');
+const asyncHandler = require('../middleware/asyncHandler');
 
-// In-memory weather forecast cache (keyed by city name lowercase)
-const weatherCache = {};
+// In-memory weather forecast cache (only used for settings router updates if needed, though they are now in weather.js)
+// We still need the getBackgroundPath helper.
+const getBackgroundPath = () => {
+  const dbDir = path.dirname(db.name);
+  return path.join(dbDir, 'background.jpg');
+};
 
-// Settings endpoints
-settingsRouter.get('/', (req, res) => {
-  try {
-    const rows = db.prepare('SELECT * FROM settings').all();
-    const settingsObj = {};
-    rows.forEach((r) => {
-      settingsObj[r.key] = r.value;
-    });
-    // Mask the weather API key if it's set
-    if (settingsObj.weather_apikey) {
-      settingsObj.weather_apikey = '******';
-    }
-    // Mask the app password if it's set
-    if (settingsObj.app_password) {
-      settingsObj.app_password = '******';
-    }
-    // Convert protection enabled to boolean
-    settingsObj.password_protection_enabled =
-      settingsObj.password_protection_enabled === '1' || settingsObj.password_protection_enabled === 'true';
-
-    res.json(settingsObj);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+// GET Settings
+router.get('/', asyncHandler(async (req, res) => {
+  const rows = db.prepare('SELECT * FROM settings').all();
+  const settingsObj = {};
+  rows.forEach((r) => {
+    settingsObj[r.key] = r.value;
+  });
+  
+  // Mask sensitive values
+  if (settingsObj.weather_apikey) {
+    settingsObj.weather_apikey = '******';
   }
-});
+  if (settingsObj.app_password) {
+    settingsObj.app_password = '******';
+  }
+  settingsObj.password_protection_enabled =
+    settingsObj.password_protection_enabled === '1' || settingsObj.password_protection_enabled === 'true';
 
-settingsRouter.put('/', (req, res) => {
+  res.json(settingsObj);
+}));
+
+// PUT Settings
+router.put('/', asyncHandler(async (req, res) => {
   const {
     app_title,
     tasks_per_page,
@@ -46,141 +47,162 @@ settingsRouter.put('/', (req, res) => {
     background_type,
     background_url
   } = req.body;
+  
   if (!app_title || !tasks_per_page) {
     return res.status(400).json({ error: 'App Title and Tasks Per Page are required.' });
   }
-  try {
-    const updateTx = db.transaction(() => {
-      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('app_title', app_title.trim());
-      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('tasks_per_page', tasks_per_page);
+
+  const updateTx = db.transaction(() => {
+    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('app_title', app_title.trim());
+    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('tasks_per_page', tasks_per_page);
+    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+      'password_protection_enabled',
+      password_protection_enabled ? '1' : '0'
+    );
+
+    if (weather_apikey !== '******') {
       db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-        'password_protection_enabled',
-        password_protection_enabled ? '1' : '0'
+        'weather_apikey',
+        (weather_apikey || '').trim()
       );
+    }
 
-      // If the key is not masked, write it. Otherwise do not overwrite the existing key.
-      if (weather_apikey !== '******') {
-        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-          'weather_apikey',
-          (weather_apikey || '').trim()
-        );
-      }
+    if (app_password !== '******') {
+      const { hashPassword } = require('../config/password');
+      const rawPassword = (app_password || '').trim();
+      const storedPassword = rawPassword ? hashPassword(rawPassword) : '';
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+        'app_password',
+        storedPassword
+      );
+    }
 
-      // If the password is not masked, write it.
-      if (app_password !== '******') {
-        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-          'app_password',
-          (app_password || '').trim()
-        );
-      }
+    if (background_type !== undefined) {
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('background_type', background_type);
+    }
 
-      if (background_type !== undefined) {
-        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-          'background_type',
-          background_type
-        );
-      }
+    if (background_url !== undefined) {
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('background_url', background_url);
+    }
+  });
 
-      if (background_url !== undefined) {
-        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('background_url', background_url);
-      }
-    });
-    updateTx();
+  updateTx();
 
-    // Clear weather cache when API key or settings are updated
-    Object.keys(weatherCache).forEach((k) => delete weatherCache[k]);
+  const currentApiKey = db.prepare('SELECT value FROM settings WHERE key = ?').get('weather_apikey')?.value || '';
+  const maskedApiKey = currentApiKey ? '******' : '';
 
-    const currentApiKey = db.prepare('SELECT value FROM settings WHERE key = ?').get('weather_apikey')?.value || '';
-    const maskedApiKey = currentApiKey ? '******' : '';
+  const currentPassword = db.prepare('SELECT value FROM settings WHERE key = ?').get('app_password')?.value || '';
+  const maskedPassword = currentPassword ? '******' : '';
 
-    const currentPassword = db.prepare('SELECT value FROM settings WHERE key = ?').get('app_password')?.value || '';
-    const maskedPassword = currentPassword ? '******' : '';
-
-    res.json({
-      app_title: app_title.trim(),
-      tasks_per_page,
-      weather_apikey: maskedApiKey,
-      password_protection_enabled: !!password_protection_enabled,
-      app_password: maskedPassword,
-      background_type: background_type || 'none',
-      background_url: background_url || ''
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
+  res.json({
+    app_title: app_title.trim(),
+    tasks_per_page,
+    weather_apikey: maskedApiKey,
+    password_protection_enabled: !!password_protection_enabled,
+    app_password: maskedPassword,
+    background_type: background_type || 'none',
+    background_url: background_url || ''
+  });
+}));
 
 // Authentication Status Check
-settingsRouter.get('/auth-status', (req, res) => {
-  try {
-    const rows = db.prepare('SELECT * FROM settings').all();
-    const settings = {};
-    rows.forEach((r) => (settings[r.key] = r.value));
+router.get('/auth-status', asyncHandler(async (req, res) => {
+  const rows = db.prepare('SELECT * FROM settings').all();
+  const settings = {};
+  rows.forEach((r) => (settings[r.key] = r.value));
 
-    const isEnabled = settings.password_protection_enabled === '1' || settings.password_protection_enabled === 'true';
-    const hasPassword = !!(settings.app_password || '').trim();
+  const isEnabled = settings.password_protection_enabled === '1' || settings.password_protection_enabled === 'true';
+  const hasPassword = !!(settings.app_password || '').trim();
 
-    // Check if the client header credentials match the stored password
-    const clientPassword = req.headers['x-app-password'] || '';
-    const isValid = !isEnabled || !hasPassword || clientPassword === settings.app_password;
+  const clientPassword = req.headers['x-app-password'] || '';
+  const { verifyPassword, hashPassword, needsMigration } = require('../config/password');
+  const isValid = !isEnabled || !hasPassword || verifyPassword(clientPassword, settings.app_password);
 
-    res.json({
-      enabled: isEnabled && hasPassword,
-      authenticated: isValid
-    });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+  // Auto-migrate if password matches and is in legacy plain-text format
+  if (isEnabled && hasPassword && isValid && needsMigration(settings.app_password)) {
+    try {
+      const hashedPassword = hashPassword(clientPassword);
+      db.prepare("UPDATE settings SET value = ? WHERE key = 'app_password'").run(hashedPassword);
+      console.log('[Auth Status] Migrated legacy password to PBKDF2 hash.');
+    } catch (migrationErr) {
+      console.error('[Auth Status] Failed to auto-migrate legacy password:', migrationErr);
+    }
   }
-});
+
+  res.json({
+    enabled: isEnabled && hasPassword,
+    authenticated: isValid
+  });
+}));
 
 // Authenticate Simple Password
-settingsRouter.post('/authenticate', (req, res) => {
+router.post('/authenticate', asyncHandler(async (req, res) => {
   const { password } = req.body;
-  try {
-    const storedPassword = db.prepare("SELECT value FROM settings WHERE key = 'app_password'").get()?.value || '';
-    if ((password || '').trim() === storedPassword) {
-      res.json({ success: true });
-    } else {
-      res.status(401).json({ error: 'Incorrect password' });
+  const storedPassword = db.prepare("SELECT value FROM settings WHERE key = 'app_password'").get()?.value || '';
+  const { verifyPassword, hashPassword, needsMigration } = require('../config/password');
+  
+  if (verifyPassword(password || '', storedPassword)) {
+    // Auto-migrate on successful authentication
+    if (needsMigration(storedPassword)) {
+      try {
+        const hashedPassword = hashPassword(password);
+        db.prepare("UPDATE settings SET value = ? WHERE key = 'app_password'").run(hashedPassword);
+        console.log('[Authenticate API] Migrated legacy password to PBKDF2 hash.');
+      } catch (migrationErr) {
+        console.error('[Authenticate API] Failed to auto-migrate legacy password:', migrationErr);
+      }
     }
-  } catch (err) {
-    res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  } else {
+    res.status(401).json({ error: 'Incorrect password' });
   }
-});
-
-const fs = require('fs');
+}));
 
 // GET background image
-settingsRouter.get('/background', (req, res) => {
-  const filePath = '/data/background.jpg';
+router.get('/background', asyncHandler(async (req, res) => {
+  const filePath = getBackgroundPath();
   if (fs.existsSync(filePath)) {
     res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
     res.sendFile(filePath);
   } else {
     res.status(404).json({ error: 'No custom background active.' });
   }
-});
+}));
 
 // POST save background image from base64
-settingsRouter.post('/background', (req, res) => {
+router.post('/background', asyncHandler(async (req, res) => {
   const { image } = req.body;
   if (!image) {
     return res.status(400).json({ error: 'Image data is required.' });
   }
-  try {
-    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-    const buffer = Buffer.from(base64Data, 'base64');
-    fs.writeFileSync('/data/background.jpg', buffer);
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to save background image: ' + err.message });
-  }
-});
-
-const dns = require('dns').promises;
+  const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+  const buffer = Buffer.from(base64Data, 'base64');
+  fs.writeFileSync(getBackgroundPath(), buffer);
+  res.json({ success: true });
+}));
 
 function isPrivateIP(ipAddress) {
-  if (!ipAddress || ipAddress === '::1' || ipAddress === '0.0.0.0') return true;
+  if (!ipAddress || ipAddress === '::1' || ipAddress === '0.0.0.0' || ipAddress === '::') return true;
+  
+  if (ipAddress.includes(':')) {
+    const cleanIp = ipAddress.toLowerCase();
+    if (
+      cleanIp.startsWith('fe8') ||
+      cleanIp.startsWith('fe9') ||
+      cleanIp.startsWith('fea') ||
+      cleanIp.startsWith('feb') ||
+      cleanIp.startsWith('fc') ||
+      cleanIp.startsWith('fd')
+    ) {
+      return true;
+    }
+    if (cleanIp.startsWith('::ffff:')) {
+      const ipv4Part = ipAddress.substring(7);
+      return isPrivateIP(ipv4Part);
+    }
+    return false;
+  }
+
   const parts = ipAddress.split('.');
   if (parts.length === 4) {
     const first = parseInt(parts[0], 10);
@@ -194,350 +216,113 @@ function isPrivateIP(ipAddress) {
   return false;
 }
 
-async function isSafeUrl(urlString) {
-  try {
-    const parsed = new URL(urlString);
-    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-      return false;
-    }
-    const hostname = parsed.hostname;
-    if (hostname === 'localhost' || hostname.endsWith('.local') || hostname.endsWith('.internal')) {
-      return false;
-    }
-
-    let addresses = [];
+function fetchSafeImage(urlString) {
+  return new Promise(async (resolve, reject) => {
     try {
-      addresses = await dns.resolve(hostname);
-    } catch {
-      try {
-        const lookup = await dns.lookup(hostname);
-        addresses = [lookup.address];
-      } catch {
-        addresses = [hostname];
+      const parsed = new URL(urlString);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        return reject(new Error('Restricted URL: Only HTTP and HTTPS protocols are allowed.'));
       }
-    }
+      const hostname = parsed.hostname;
+      if (hostname === 'localhost' || hostname.endsWith('.local') || hostname.endsWith('.internal')) {
+        return reject(new Error('Restricted URL: Internal hostnames are not allowed.'));
+      }
 
-    for (const addr of addresses) {
-      if (isPrivateIP(addr)) {
-        return false;
+      let addresses = [];
+      try {
+        addresses = await dns.resolve(hostname);
+      } catch {
+        try {
+          const lookup = await dns.lookup(hostname);
+          addresses = [lookup.address];
+        } catch (err) {
+          return reject(new Error('DNS resolution failed: ' + err.message));
+        }
       }
+
+      if (addresses.length === 0) {
+        return reject(new Error('No IP addresses resolved for hostname.'));
+      }
+
+      for (const addr of addresses) {
+        if (isPrivateIP(addr)) {
+          return reject(new Error('Restricted URL: Private/internal IP range detected.'));
+        }
+      }
+
+      const safeIp = addresses[0];
+      const client = parsed.protocol === 'https:' ? https : http;
+
+      const req = client.request({
+        method: 'GET',
+        hostname: parsed.hostname,
+        port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+        path: parsed.pathname + parsed.search,
+        headers: {
+          'User-Agent': 'HomeBoard-SSRF-Filter/1.0'
+        },
+        lookup: (host, opts, cb) => {
+          cb(null, safeIp, safeIp.includes(':') ? 6 : 4);
+        },
+        timeout: 5000
+      }, (response) => {
+        if (response.statusCode < 200 || response.statusCode >= 300) {
+          return reject(new Error(`HTTP ${response.statusCode}`));
+        }
+
+        const contentType = response.headers['content-type'] || '';
+        if (!contentType.startsWith('image/')) {
+          return reject(new Error('Fetched URL is not an image'));
+        }
+
+        const chunks = [];
+        response.on('data', (chunk) => chunks.push(chunk));
+        response.on('end', () => {
+          resolve({
+            contentType,
+            buffer: Buffer.concat(chunks)
+          });
+        });
+      });
+
+      req.on('error', (err) => {
+        reject(err);
+      });
+
+      req.on('timeout', () => {
+        req.destroy();
+        reject(new Error('Connection timed out'));
+      });
+
+      req.end();
+    } catch (err) {
+      reject(err);
     }
-    return true;
-  } catch {
-    return false;
-  }
+  });
 }
 
 // POST proxy external image download
-settingsRouter.post('/background/fetch-external', async (req, res) => {
+router.post('/background/fetch-external', asyncHandler(async (req, res) => {
   const { url } = req.body;
   if (!url) {
     return res.status(400).json({ error: 'URL is required.' });
   }
   try {
-    if (!(await isSafeUrl(url))) {
-      return res.status(400).json({ error: 'Restricted URL: Only public URLs are allowed.' });
-    }
-    const imageRes = await fetch(url);
-    if (!imageRes.ok) {
-      throw new Error(`Failed to fetch image: HTTP ${imageRes.status}`);
-    }
-    const contentType = imageRes.headers.get('content-type') || '';
-    if (!contentType.startsWith('image/')) {
-      throw new Error('Fetched URL is not an image');
-    }
-    const arrayBuffer = await imageRes.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const { contentType, buffer } = await fetchSafeImage(url);
     const base64 = buffer.toString('base64');
     res.json({ contentType, data: base64 });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch image: ' + err.message });
+    res.status(400).json({ error: err.message });
   }
-});
+}));
 
 // DELETE clear background image
-settingsRouter.delete('/background', (req, res) => {
-  const filePath = '/data/background.jpg';
-  try {
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to delete background: ' + err.message });
+router.delete('/background', asyncHandler(async (req, res) => {
+  const filePath = getBackgroundPath();
+  if (fs.existsSync(filePath)) {
+    fs.unlinkSync(filePath);
   }
-});
+  res.json({ success: true });
+}));
 
-// Weather Locations CRUD
-
-// 1. Get all weather locations
-weatherRouter.get('/locations', (req, res) => {
-  try {
-    const locations = db.prepare('SELECT * FROM weather_locations ORDER BY id ASC').all();
-    res.json(locations);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 2. Add weather location
-weatherRouter.post('/locations', (req, res) => {
-  const { name } = req.body;
-  if (!name) {
-    return res.status(400).json({ error: 'City name is required.' });
-  }
-  try {
-    const info = db.prepare('INSERT INTO weather_locations (name) VALUES (?)').run(name.trim());
-    res.status(201).json({ id: info.lastInsertRowid, name: name.trim() });
-  } catch (err) {
-    if (err.message.includes('UNIQUE constraint failed')) {
-      res.status(400).json({ error: 'City location already exists.' });
-    } else {
-      res.status(500).json({ error: err.message });
-    }
-  }
-});
-
-// 3. Delete weather location
-weatherRouter.delete('/locations/:id', (req, res) => {
-  const { id } = req.params;
-  try {
-    const info = db.prepare('DELETE FROM weather_locations WHERE id = ?').run(id);
-    if (info.changes === 0) {
-      return res.status(404).json({ error: 'Location not found.' });
-    }
-    res.json({ message: 'Location deleted successfully.' });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// 4. Set weather location as home
-weatherRouter.put('/locations/:id/set-home', (req, res) => {
-  const { id } = req.params;
-  try {
-    const updateTx = db.transaction(() => {
-      db.prepare('UPDATE weather_locations SET is_home = 0').run();
-      const info = db.prepare('UPDATE weather_locations SET is_home = 1 WHERE id = ?').run(id);
-      if (info.changes === 0) {
-        throw new Error('Location not found.');
-      }
-    });
-    updateTx();
-    res.json({ message: 'Home location updated successfully.' });
-  } catch (err) {
-    if (err.message === 'Location not found.') {
-      res.status(404).json({ error: err.message });
-    } else {
-      res.status(500).json({ error: err.message });
-    }
-  }
-});
-
-// Weather forecast endpoint
-weatherRouter.get('/', async (req, res) => {
-  try {
-    const rows = db.prepare('SELECT * FROM settings').all();
-    const settings = {};
-    rows.forEach((r) => (settings[r.key] = r.value));
-
-    const apiKey = settings.weather_apikey;
-    const locationId = req.query.location_id ? parseInt(req.query.location_id) : null;
-    const isHome = req.query.is_home === 'true';
-    let city = '';
-
-    if (isHome) {
-      const loc =
-        db.prepare('SELECT name FROM weather_locations WHERE is_home = 1').get() ||
-        db.prepare('SELECT name FROM weather_locations ORDER BY id ASC LIMIT 1').get();
-      if (loc) city = loc.name;
-    } else if (locationId) {
-      const loc = db.prepare('SELECT name FROM weather_locations WHERE id = ?').get(locationId);
-      if (loc) city = loc.name;
-    } else {
-      const loc = db.prepare('SELECT name FROM weather_locations ORDER BY id ASC LIMIT 1').get();
-      if (loc) city = loc.name;
-    }
-
-    if (!city || !apiKey) {
-      return res.json({ configured: false });
-    }
-
-    const CACHE_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
-    const cached = weatherCache[city.toLowerCase()];
-    if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
-      console.log(`[Weather] Serving cached forecast for city: "${city}"`);
-      return res.json({
-        configured: true,
-        current: cached.current,
-        forecast: cached.forecast
-      });
-    }
-
-    console.log(`[Weather] Fetching weather forecast for city: "${city}"`);
-
-    const curUrl = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
-    const curRes = await fetch(curUrl);
-    if (!curRes.ok) {
-      console.error(`[Weather] Current weather fetch failed for city "${city}" with status: ${curRes.status}`);
-      return res
-        .status(curRes.status)
-        .json({ error: `OpenWeatherMap current weather query failed (Status: ${curRes.status})` });
-    }
-    const curData = await curRes.json();
-
-    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${encodeURIComponent(city)}&appid=${apiKey}&units=metric`;
-    const forecastRes = await fetch(forecastUrl);
-    if (!forecastRes.ok) {
-      console.error(`[Weather] Forecast weather fetch failed for city "${city}" with status: ${forecastRes.status}`);
-      return res
-        .status(forecastRes.status)
-        .json({ error: `OpenWeatherMap forecast query failed (Status: ${forecastRes.status})` });
-    }
-    const forecastData = await forecastRes.json();
-
-    // Store in cache
-    weatherCache[city.toLowerCase()] = {
-      current: curData,
-      forecast: forecastData,
-      timestamp: Date.now()
-    };
-
-    res.json({
-      configured: true,
-      current: curData,
-      forecast: forecastData
-    });
-  } catch (err) {
-    console.error(`[Weather] Unexpected weather API error:`, err.message);
-    res.status(500).json({ error: err.message });
-  }
-});
-
-// POST DB Backup
-settingsRouter.post('/backup', async (req, res) => {
-  const { password, compress } = req.body;
-  const shouldCompress = compress !== false;
-  const dbDir = path.dirname(db.name);
-  const tempPath = path.join(dbDir, `temp_backup_${Date.now()}.db`);
-  try {
-    await db.backup(tempPath);
-    const dbBuffer = fs.readFileSync(tempPath);
-    if (fs.existsSync(tempPath)) {
-      fs.unlinkSync(tempPath);
-    }
-
-    const processedBuffer = shouldCompress ? zlib.gzipSync(dbBuffer) : dbBuffer;
-    let finalBuffer = processedBuffer;
-    let filename = `homeboard_backup_${new Date().toISOString().slice(0, 10)}`;
-    if (shouldCompress) {
-      filename += '.db.gz';
-    } else {
-      filename += '.db';
-    }
-
-    if (password && password.trim()) {
-      const salt = crypto.randomBytes(16);
-      const key = crypto.scryptSync(password.trim(), salt, 32, { N: 16384, r: 8, p: 1 });
-      const iv = crypto.randomBytes(12);
-      const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
-      const ciphertext = Buffer.concat([cipher.update(processedBuffer), cipher.final()]);
-      const authTag = cipher.getAuthTag();
-
-      const header = Buffer.from('HBENC');
-      finalBuffer = Buffer.concat([header, salt, iv, authTag, ciphertext]);
-      filename += '.enc';
-    }
-
-    res.setHeader('Content-Type', 'application/octet-stream');
-    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    res.send(finalBuffer);
-  } catch (err) {
-    if (fs.existsSync(tempPath)) {
-      try {
-        fs.unlinkSync(tempPath);
-      } catch {
-        // Ignore cleanup failure
-      }
-    }
-    console.error('Backup error:', err);
-    res.status(500).json({ error: 'Failed to create backup: ' + err.message });
-  }
-});
-
-// POST DB Restore
-settingsRouter.post('/restore', async (req, res) => {
-  const { file, password } = req.body;
-  if (!file) {
-    return res.status(400).json({ error: 'Backup file data is required.' });
-  }
-
-  const dbDir = path.dirname(db.name);
-  const tempRestorePath = path.join(dbDir, `temp_restore_${Date.now()}.db`);
-  try {
-    const fileBuffer = Buffer.from(file, 'base64');
-    let decryptedBuffer;
-
-    const header = fileBuffer.subarray(0, 5).toString();
-    if (header === 'HBENC') {
-      if (!password || !password.trim()) {
-        return res.status(400).json({ error: 'PASSWORD_REQUIRED' });
-      }
-
-      const salt = fileBuffer.subarray(5, 21);
-      const iv = fileBuffer.subarray(21, 33);
-      const authTag = fileBuffer.subarray(33, 49);
-      const ciphertext = fileBuffer.subarray(49);
-
-      try {
-        const key = crypto.scryptSync(password.trim(), salt, 32, { N: 16384, r: 8, p: 1 });
-        const decipher = crypto.createDecipheriv('aes-256-gcm', key, iv);
-        decipher.setAuthTag(authTag);
-        decryptedBuffer = Buffer.concat([decipher.update(ciphertext), decipher.final()]);
-      } catch {
-        return res.status(400).json({ error: 'INCORRECT_PASSWORD' });
-      }
-    } else {
-      decryptedBuffer = fileBuffer;
-    }
-
-    let dbBuffer;
-    if (decryptedBuffer[0] === 0x1f && decryptedBuffer[1] === 0x8b) {
-      try {
-        dbBuffer = zlib.gunzipSync(decryptedBuffer);
-      } catch {
-        return res.status(400).json({ error: 'Failed to decompress backup file.' });
-      }
-    } else {
-      dbBuffer = decryptedBuffer;
-    }
-
-    if (dbBuffer.subarray(0, 16).toString() !== 'SQLite format 3\0') {
-      return res.status(400).json({ error: 'Not a valid SQLite database file.' });
-    }
-
-    fs.writeFileSync(tempRestorePath, dbBuffer);
-    db.closeAndReplace(tempRestorePath);
-
-    if (fs.existsSync(tempRestorePath)) {
-      fs.unlinkSync(tempRestorePath);
-    }
-
-    res.json({ success: true });
-  } catch (err) {
-    if (fs.existsSync(tempRestorePath)) {
-      try {
-        fs.unlinkSync(tempRestorePath);
-      } catch {
-        // Ignore cleanup failure
-      }
-    }
-    console.error('Restore error:', err);
-    res.status(500).json({ error: 'Failed to restore database: ' + err.message });
-  }
-});
-
-module.exports = {
-  settingsRouter,
-  weatherRouter
-};
+module.exports = router;

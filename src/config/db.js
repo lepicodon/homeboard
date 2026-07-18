@@ -351,6 +351,8 @@ function runMigrations(db) {
   CREATE INDEX IF NOT EXISTS idx_task_members_member_id ON task_members(member_id);
   CREATE INDEX IF NOT EXISTS idx_shopping_items_checked ON shopping_items(checked);
   CREATE INDEX IF NOT EXISTS idx_shopping_items_list_id ON shopping_items(list_id);
+  CREATE INDEX IF NOT EXISTS idx_memos_event_date ON memos(event_date);
+  CREATE INDEX IF NOT EXISTS idx_weather_locations_is_home ON weather_locations(is_home);
 `);
 
   // Populate default data if tables are empty
