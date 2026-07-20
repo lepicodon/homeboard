@@ -481,6 +481,12 @@ body {
   gap: 8px;
 }
 
+.controls-btn-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 #shoppingListSelector {
   padding: 8px 12px;
   border-radius: var(--border-radius-sm);
@@ -2003,6 +2009,43 @@ dialog[open]::backdrop {
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+    width: 100%;
+  }
+
+  .header-titles {
+    width: 100%;
+  }
+
+  .shopping-title-row {
+    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  .shopping-list-controls {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 10px;
+  }
+
+  .shopping-list-controls .select-wrapper {
+    width: 100%;
+  }
+
+  .shopping-list-controls select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .controls-btn-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    width: 100%;
   }
 
   .header-actions {
@@ -2598,7 +2641,10 @@ dialog[open]::backdrop {
 @media (max-width: 767px) {
   .weather-current-card {
     grid-template-columns: repeat(2, 1fr);
-    padding: 24px;
+    padding: 20px;
+  }
+  .weather-forecast-card {
+    padding: 20px;
   }
   .weather-current-main {
     grid-column: 1 / -1;
@@ -2607,12 +2653,31 @@ dialog[open]::backdrop {
 }
 
 @media (max-width: 480px) {
+  .main-content {
+    padding: 16px 12px;
+  }
   .weather-current-card {
     grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  .weather-forecast-card {
+    padding: 16px;
+  }
+  .weather-forecast-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 10px;
+  }
+  .weather-large-temp {
+    font-size: 48px;
+  }
+  .weather-main-icon {
+    font-size: 48px;
   }
   .weather-current-main {
     grid-column: 1 / -1;
     justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
   }
 }
 
