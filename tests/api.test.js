@@ -48,6 +48,41 @@ describe('API Integration Tests', () => {
       expect(res.body.authenticated).toBe(true);
     });
 
+    test('GET /api/settings should include module toggle flags', async () => {
+      const res = await request(app).get('/api/settings');
+      expect(res.status).toBe(200);
+      expect(typeof res.body.module_tasks_enabled).toBe('boolean');
+      expect(typeof res.body.module_calendar_enabled).toBe('boolean');
+      expect(typeof res.body.module_memos_enabled).toBe('boolean');
+      expect(typeof res.body.module_shopping_enabled).toBe('boolean');
+      expect(typeof res.body.module_weather_enabled).toBe('boolean');
+    });
+
+    test('PUT /api/settings should update module enable/disable settings', async () => {
+      const res = await request(app)
+        .put('/api/settings')
+        .send({
+          app_title: 'HomeBoard Test',
+          tasks_per_page: '10',
+          module_tasks_enabled: true,
+          module_calendar_enabled: false,
+          module_memos_enabled: true,
+          module_shopping_enabled: false,
+          module_weather_enabled: true
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.module_tasks_enabled).toBe(true);
+      expect(res.body.module_calendar_enabled).toBe(false);
+      expect(res.body.module_memos_enabled).toBe(true);
+      expect(res.body.module_shopping_enabled).toBe(false);
+      expect(res.body.module_weather_enabled).toBe(true);
+
+      const getRes = await request(app).get('/api/settings');
+      expect(getRes.body.module_calendar_enabled).toBe(false);
+      expect(getRes.body.module_shopping_enabled).toBe(false);
+    });
+
     test('GET /api/categories should return status 200 and an array', async () => {
       const res = await request(app).get('/api/categories');
       expect(res.status).toBe(200);
@@ -314,7 +349,8 @@ describe('API Integration Tests', () => {
     });
 
     describe('GET/POST/DELETE /api/settings/background endpoints', () => {
-      const DUMMY_BASE64_IMAGE = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // 1x1 png
+      const DUMMY_BASE64_IMAGE =
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII='; // 1x1 png
 
       test('should save base64 background image, retrieve it, and delete it successfully', async () => {
         // 1. POST (Save)
@@ -464,7 +500,7 @@ describe('API Integration Tests', () => {
 
       test('should perform dynamic plain-text login migration to hashed password', async () => {
         const plainTextPassword = 'legacy-plain-password-123';
-        
+
         // 1. Manually write a plain-text password to settings
         db.prepare("UPDATE settings SET value = '1' WHERE key = 'password_protection_enabled'").run();
         db.prepare("UPDATE settings SET value = ? WHERE key = 'app_password'").run(plainTextPassword);
@@ -479,7 +515,9 @@ describe('API Integration Tests', () => {
         expect(storedPassword.startsWith('$pbkdf2$')).toBe(true);
 
         // 4. Verify we can still log in using the same password
-        const resAuthAfter = await request(app).post('/api/settings/authenticate').send({ password: plainTextPassword });
+        const resAuthAfter = await request(app)
+          .post('/api/settings/authenticate')
+          .send({ password: plainTextPassword });
         expect(resAuthAfter.status).toBe(200);
       });
     });
@@ -491,9 +529,15 @@ describe('API Integration Tests', () => {
         db.prepare("UPDATE settings SET value = '' WHERE key = 'app_password'").run();
 
         // 2. Create 3 dummy tasks
-        const task1 = await request(app).post('/api/tasks').send({ title: 'Pagination Task 1', size: 'small', assigned_type: 'unassigned' });
-        const task2 = await request(app).post('/api/tasks').send({ title: 'Pagination Task 2', size: 'medium', assigned_type: 'unassigned' });
-        const task3 = await request(app).post('/api/tasks').send({ title: 'Pagination Task 3', size: 'big', assigned_type: 'unassigned' });
+        const task1 = await request(app)
+          .post('/api/tasks')
+          .send({ title: 'Pagination Task 1', size: 'small', assigned_type: 'unassigned' });
+        const task2 = await request(app)
+          .post('/api/tasks')
+          .send({ title: 'Pagination Task 2', size: 'medium', assigned_type: 'unassigned' });
+        const task3 = await request(app)
+          .post('/api/tasks')
+          .send({ title: 'Pagination Task 3', size: 'big', assigned_type: 'unassigned' });
 
         expect(task1.status).toBe(201);
         expect(task2.status).toBe(201);
@@ -505,7 +549,7 @@ describe('API Integration Tests', () => {
         expect(Array.isArray(resPaginated.body)).toBe(true);
         expect(resPaginated.body.length).toBe(2);
         expect(resPaginated.headers['x-total-count']).toBeDefined();
-        
+
         const totalCount = parseInt(resPaginated.headers['x-total-count'], 10);
         expect(totalCount).toBeGreaterThanOrEqual(3);
 
@@ -517,18 +561,22 @@ describe('API Integration Tests', () => {
     describe('Categories & Members CRUD Operations', () => {
       test('should support category CRUD lifecycle', async () => {
         // Create
-        const resCreate = await request(app).post('/api/categories').send({ name: 'CRUDTestCategory', color: '#ff00ff' });
+        const resCreate = await request(app)
+          .post('/api/categories')
+          .send({ name: 'CRUDTestCategory', color: '#ff00ff' });
         expect(resCreate.status).toBe(201);
         const categoryId = resCreate.body.id;
 
         // List
         const resList = await request(app).get('/api/categories');
-        const found = resList.body.find(c => c.id === categoryId);
+        const found = resList.body.find((c) => c.id === categoryId);
         expect(found).toBeDefined();
         expect(found.name).toBe('CRUDTestCategory');
 
         // Update
-        const resUpdate = await request(app).put(`/api/categories/${categoryId}`).send({ name: 'CRUDTestCategoryUpdated', color: '#00ffff' });
+        const resUpdate = await request(app)
+          .put(`/api/categories/${categoryId}`)
+          .send({ name: 'CRUDTestCategoryUpdated', color: '#00ffff' });
         expect(resUpdate.status).toBe(200);
         expect(resUpdate.body.name).toBe('CRUDTestCategoryUpdated');
 
@@ -539,18 +587,22 @@ describe('API Integration Tests', () => {
 
       test('should support member CRUD lifecycle', async () => {
         // Create
-        const resCreate = await request(app).post('/api/members').send({ name: 'CRUDTestMember', color: '#ff00ff', avatar: 'avatar.png' });
+        const resCreate = await request(app)
+          .post('/api/members')
+          .send({ name: 'CRUDTestMember', color: '#ff00ff', avatar: 'avatar.png' });
         expect(resCreate.status).toBe(201);
         const memberId = resCreate.body.id;
 
         // List
         const resList = await request(app).get('/api/members');
-        const found = resList.body.find(m => m.id === memberId);
+        const found = resList.body.find((m) => m.id === memberId);
         expect(found).toBeDefined();
         expect(found.name).toBe('CRUDTestMember');
 
         // Update
-        const resUpdate = await request(app).put(`/api/members/${memberId}`).send({ name: 'CRUDTestMemberUpdated', color: '#00ffff', avatar: 'avatar2.png' });
+        const resUpdate = await request(app)
+          .put(`/api/members/${memberId}`)
+          .send({ name: 'CRUDTestMemberUpdated', color: '#00ffff', avatar: 'avatar2.png' });
         expect(resUpdate.status).toBe(200);
         expect(resUpdate.body.name).toBe('CRUDTestMemberUpdated');
 
@@ -564,8 +616,10 @@ describe('API Integration Tests', () => {
       test('should return 400 with descriptive error on database constraints', async () => {
         // Create duplicate category (should trigger UNIQUE constraint error)
         db.prepare("INSERT OR IGNORE INTO categories (name, color) VALUES ('DuplicateCat', '#000000')").run();
-        
-        const resDuplicate = await request(app).post('/api/categories').send({ name: 'DuplicateCat', color: '#ffffff' });
+
+        const resDuplicate = await request(app)
+          .post('/api/categories')
+          .send({ name: 'DuplicateCat', color: '#ffffff' });
         expect(resDuplicate.status).toBe(400);
         expect(resDuplicate.body.error).toContain('Category name already exists.');
 
@@ -585,7 +639,7 @@ describe('API Integration Tests', () => {
 
         // List
         const resList = await request(app).get('/api/memos');
-        const found = resList.body.find(m => m.id === memoId);
+        const found = resList.body.find((m) => m.id === memoId);
         expect(found).toBeDefined();
         expect(found.content).toBe('CRUD Test Memo Content');
 
@@ -603,15 +657,13 @@ describe('API Integration Tests', () => {
 
       test('should support shopping list and items CRUD lifecycle', async () => {
         // Create List
-        const resListCreate = await request(app)
-          .post('/api/shopping/lists')
-          .send({ name: 'CRUD Test Shopping List' });
+        const resListCreate = await request(app).post('/api/shopping/lists').send({ name: 'CRUD Test Shopping List' });
         expect(resListCreate.status).toBe(201);
         const listId = resListCreate.body.id;
 
         // List lists
         const resLists = await request(app).get('/api/shopping/lists');
-        const foundList = resLists.body.find(l => l.id === listId);
+        const foundList = resLists.body.find((l) => l.id === listId);
         expect(foundList).toBeDefined();
         expect(foundList.name).toBe('CRUD Test Shopping List');
 
@@ -624,7 +676,7 @@ describe('API Integration Tests', () => {
 
         // List Items
         const resItems = await request(app).get(`/api/shopping?list_id=${listId}`);
-        const foundItem = resItems.body.find(i => i.id === itemId);
+        const foundItem = resItems.body.find((i) => i.id === itemId);
         expect(foundItem).toBeDefined();
         expect(foundItem.name).toBe('Apples');
 
@@ -639,7 +691,7 @@ describe('API Integration Tests', () => {
 
         // Verify item is deleted because it was cleared
         const resItemsAfter = await request(app).get(`/api/shopping?list_id=${listId}`);
-        const foundItemAfter = resItemsAfter.body.find(i => i.id === itemId);
+        const foundItemAfter = resItemsAfter.body.find((i) => i.id === itemId);
         expect(foundItemAfter).toBeUndefined();
 
         // Delete List

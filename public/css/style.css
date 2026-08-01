@@ -3519,7 +3519,9 @@ html[data-theme='light'] body.has-background .app-container {
   gap: 16px;
   cursor: pointer;
   transform: translateX(120%);
-  transition: transform var(--transition-normal) cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity var(--transition-normal);
+  transition:
+    transform var(--transition-normal) cubic-bezier(0.175, 0.885, 0.32, 1.275),
+    opacity var(--transition-normal);
   opacity: 0;
 }
 

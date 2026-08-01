@@ -1,22 +1,28 @@
-# 🏠 HomeBoard - Family Chores & Task Dashboard
+# 🏠 HomeBoard - Task & Dashboard Management
 
-HomeBoard is a lightweight, responsive, and modern dashboard application built to organize household chores, share sticky note memos, and manage family shopping lists. It runs seamlessly on desktop, tablet, and mobile devices with full light/dark theme support.
+HomeBoard is a lightweight, responsive, and modern dashboard application built to organize tasks, share sticky note memos, manage shopping lists, track calendar events, and view weather forecasts. It runs seamlessly on desktop, tablet, and mobile devices with full light/dark theme support.
 
 <img src="screens/desktop_dark_tasks.png" width="400" alt="Desktop Dark Tasks">
 
 See more previews in <a href="SCREENSHOTS.md">SCREENSHOTS.md</a>.
 
-_Built with the help of Antigravity, using Gemini 3.5 Flash._
+_Built with the help of Antigravity, using Gemini 3.6 Flash._
 
 ---
 
 ## 🌟 Key Features
 
+### 🧩 Configurable Module System
+
+- **Enable/Disable Modules**: Easily toggle individual application modules (**Tasks**, **Calendar**, **Memos**, **Shopping**, **Weather**) via the Settings General tab.
+- **Dynamic Navigation & Widgets**: Automatically hides navigation links, weather widgets, and task progress bars for disabled modules.
+- **Smart Redirection**: Navigating to a URL hash for a disabled module automatically redirects to the first available active module (or Settings).
+
 ### 📋 Task Management
 
-- **Flexible Sizing**: Classify chores as **Small** (green), **Medium** (amber), or **Big** (red).
-- **Assignees**: Assign tasks to multiple family members, unassigned, or external names/services (e.g. plumber, guests).
-- **Recurrence Engine**: Support for **weekly, bi-weekly, monthly, or quarterly** chore recurrence. When completed, next occurrence is spawned automatically with advanced deadlines in transactional operations.
+- **Flexible Sizing**: Classify tasks as **Small** (green), **Medium** (amber), or **Big** (red).
+- **Assignees**: Assign tasks to multiple users, unassigned, or external names/services (e.g. plumber, guests).
+- **Recurrence Engine**: Support for **weekly, bi-weekly, monthly, or quarterly** task recurrence. When completed, next occurrence is spawned automatically with advanced deadlines in transactional operations.
 
 ### 📅 Calendar Agenda View
 
@@ -25,7 +31,7 @@ _Built with the help of Antigravity, using Gemini 3.5 Flash._
 
 ### 📌 Memo Sticky Board
 
-- **Visual Notes**: Fridge-board grid using colored pastel memos (8 colors available) randomly rotated for realism.
+- **Visual Notes**: Board grid using colored pastel memos (8 colors available) randomly rotated for realism.
 - **Calendar Deadlines**: Memos can have optional dates linking them directly into calendar days as event notifications.
 
 ### 🛒 Shared Shopping Lists (Multi-List Support)
@@ -42,12 +48,24 @@ _Built with the help of Antigravity, using Gemini 3.5 Flash._
 - **Interactive Switching**: Switch active weather forecasts instantly in the sidebar and main panel widgets.
 - **5-Day Forecasts**: Fetches both current temperature/conditions and 3-hour interval 5-day forecasts via OpenWeatherMap APIs.
 
+### 👥 User Management
+
+- **User Profiles**: Register and manage users with custom colors and optional profile avatar images.
+- **Task Assignment**: Easily assign tasks across registered users or external assignees.
+
 ### 🖼️ Custom Background Wallpapers
 
 - **Local Uploads & URL Imports**: Upload your own image file (PNG, JPG, JPEG) or specify an image URL to download, optimize, and set as the background.
 - **Client-Side Canvas Optimization**: Automatically downscales high-resolution source images to `1920x1080` maximum and applies `85%` quality JPEG compression directly in the browser using HTML5 Canvas APIs, keeping images lightweight (under 200–400 KB) and saving server CPU resources.
-- **Premium Glassmorphic Overlay**: Applies a subtle overlay tint (`0.3` opacity in dark mode / `0.35` in light mode) and a container backdrop blur (`blur(5px)`) to maintain perfect contrast and legibility.
+- **Premium Glassmorphic Overlay**: Applies a subtle overlay tint (`0.3` opacity in dark mode / `0.35` in light mode) and a container backdrop blur (`blur(5px)`) to maintain contrast and legibility.
 - **Fixed Attachment**: Wallpaper remains fixed in the background while dashboard cards scroll smoothly on top of it.
+
+### 💾 Encrypted Backup & Restore
+
+- **Database Backups**: Download full SQLite database backups directly from Settings.
+- **Password Protection**: Secure backup files using AES-256-GCM authenticated encryption derived via Scrypt.
+- **Compression**: GZIP compression support for minimal file sizes.
+- **Safe Restore**: Upload backup files with automatic decryption, verification, and transaction safety.
 
 ### 📱 Responsive Mobile & Collapsible Sidebar Layouts
 
@@ -91,10 +109,11 @@ homeboard/
 │   ├── middleware/
 │   │   └── auth.js          # API access protection middleware
 │   └── routes/              # Express API Route Handlers
+│       ├── backup.js        # Encrypted database backup & restore handlers
 │       ├── categories.js
-│       ├── members.js
+│       ├── members.js       # User management endpoints
 │       ├── memos.js
-│       ├── settings.js      # App configurations & Weather proxies
+│       ├── settings.js      # App configurations, module settings & weather proxies
 │       ├── shopping.js
 │       └── tasks.js
 ├── public/                  # Static Frontend Client
@@ -103,10 +122,10 @@ homeboard/
 │   ├── fonts/               # Self-hosted woff2 Outfit fonts
 │   ├── js/                  # ES6 Modular Frontend
 │   │   ├── api.js           # AJAX API wrapper & 401 prompt redirect
-│   │   ├── app.js           # Bootstrap orchestrator
-│   │   ├── state.js         # Shared client state
+│   │   ├── app.js           # SPA router & bootstrap orchestrator
+│   │   ├── state.js         # Shared client state & module flags
 │   │   ├── utils.js         # DOM escaping utilities
-│   │   └── modules/         # Dashboard view managers (calendar, tasks, etc.)
+│   │   └── modules/         # Dashboard view managers (calendar, tasks, settings, etc.)
 │   └── index.html           # Single Page Layout
 ├── tests/
 │   ├── api.test.js          # Supertest router integration tests
@@ -164,12 +183,12 @@ All API endpoints are prefixed with `/api` and are rate-limited. If Access Prote
 - `PUT /api/categories/:id` - Update a task category
 - `DELETE /api/categories/:id` - Delete a task category
 
-### 👥 Family Members
+### 👥 Users
 
-- `GET /api/members` - Fetch family members
-- `POST /api/members` - Create a family member (supports profile picture base64 payload)
-- `PUT /api/members/:id` - Update a family member details
-- `DELETE /api/members/:id` - Delete a family member
+- `GET /api/members` - Fetch users
+- `POST /api/members` - Create a user (supports profile picture base64 payload)
+- `PUT /api/members/:id` - Update user details
+- `DELETE /api/members/:id` - Delete a user
 
 ### 📌 Sticky Board Memos
 
@@ -201,14 +220,19 @@ All API endpoints are prefixed with `/api` and are rate-limited. If Access Prote
 - `PUT /api/weather/locations/:id/set-home` - Mark city ID as default home location
 - `GET /api/weather?location_id=X` - Proxies weather forecast query for location ID `X` (includes 30-minute memory cache)
 
-### ⚙️ System Settings
+### ⚙️ System & Module Settings
 
-- `GET /api/settings` - Fetch system settings (masks API key and App Password)
-- `PUT /api/settings` - Update settings (system name, tasks per page, weather API key, password credentials, background configurations)
+- `GET /api/settings` - Fetch system settings (includes module enablement flags, masks API key and App Password)
+- `PUT /api/settings` - Update settings (system name, tasks per page, module toggles, weather API key, password credentials, background configurations)
 - `GET /api/settings/background` - Fetch the active custom background wallpaper image
 - `POST /api/settings/background` - Upload an optimized base64 JPEG background image
 - `POST /api/settings/background/fetch-external` - Proxy secure download of a remote image URL to bypass client-side CORS constraints
 - `DELETE /api/settings/background` - Remove the active custom background image from the server disk
+
+### 💾 Backup & Restore
+
+- `POST /api/settings/backup` - Generate and download database backup (supports GZIP compression and Scrypt AES-256-GCM password encryption)
+- `POST /api/settings/restore` - Restore SQLite database from uploaded backup data (supports encrypted payload decryption)
 
 ---
 

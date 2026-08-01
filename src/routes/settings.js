@@ -16,174 +16,231 @@ const getBackgroundPath = () => {
 };
 
 // GET Settings
-router.get('/', asyncHandler(async (req, res) => {
-  const rows = db.prepare('SELECT * FROM settings').all();
-  const settingsObj = {};
-  rows.forEach((r) => {
-    settingsObj[r.key] = r.value;
-  });
-  
-  // Mask sensitive values
-  if (settingsObj.weather_apikey) {
-    settingsObj.weather_apikey = '******';
-  }
-  if (settingsObj.app_password) {
-    settingsObj.app_password = '******';
-  }
-  settingsObj.password_protection_enabled =
-    settingsObj.password_protection_enabled === '1' || settingsObj.password_protection_enabled === 'true';
+router.get(
+  '/',
+  asyncHandler(async (req, res) => {
+    const rows = db.prepare('SELECT * FROM settings').all();
+    const settingsObj = {};
+    rows.forEach((r) => {
+      settingsObj[r.key] = r.value;
+    });
 
-  res.json(settingsObj);
-}));
+    // Mask sensitive values
+    if (settingsObj.weather_apikey) {
+      settingsObj.weather_apikey = '******';
+    }
+    if (settingsObj.app_password) {
+      settingsObj.app_password = '******';
+    }
+    settingsObj.password_protection_enabled =
+      settingsObj.password_protection_enabled === '1' || settingsObj.password_protection_enabled === 'true';
+
+    const moduleKeys = [
+      'module_tasks_enabled',
+      'module_calendar_enabled',
+      'module_memos_enabled',
+      'module_shopping_enabled',
+      'module_weather_enabled'
+    ];
+    moduleKeys.forEach((key) => {
+      settingsObj[key] = settingsObj[key] !== '0' && settingsObj[key] !== 'false';
+    });
+
+    res.json(settingsObj);
+  })
+);
 
 // PUT Settings
-router.put('/', asyncHandler(async (req, res) => {
-  const {
-    app_title,
-    tasks_per_page,
-    weather_apikey,
-    password_protection_enabled,
-    app_password,
-    background_type,
-    background_url
-  } = req.body;
-  
-  if (!app_title || !tasks_per_page) {
-    return res.status(400).json({ error: 'App Title and Tasks Per Page are required.' });
-  }
+router.put(
+  '/',
+  asyncHandler(async (req, res) => {
+    const {
+      app_title,
+      tasks_per_page,
+      weather_apikey,
+      password_protection_enabled,
+      app_password,
+      background_type,
+      background_url,
+      module_tasks_enabled,
+      module_calendar_enabled,
+      module_memos_enabled,
+      module_shopping_enabled,
+      module_weather_enabled
+    } = req.body;
 
-  const updateTx = db.transaction(() => {
-    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('app_title', app_title.trim());
-    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('tasks_per_page', tasks_per_page);
-    db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-      'password_protection_enabled',
-      password_protection_enabled ? '1' : '0'
-    );
+    if (!app_title || !tasks_per_page) {
+      return res.status(400).json({ error: 'App Title and Tasks Per Page are required.' });
+    }
 
-    if (weather_apikey !== '******') {
+    const updateTx = db.transaction(() => {
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('app_title', app_title.trim());
+      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('tasks_per_page', tasks_per_page);
       db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-        'weather_apikey',
-        (weather_apikey || '').trim()
+        'password_protection_enabled',
+        password_protection_enabled ? '1' : '0'
       );
-    }
 
-    if (app_password !== '******') {
-      const { hashPassword } = require('../config/password');
-      const rawPassword = (app_password || '').trim();
-      const storedPassword = rawPassword ? hashPassword(rawPassword) : '';
-      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
-        'app_password',
-        storedPassword
-      );
-    }
+      if (weather_apikey !== '******') {
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+          'weather_apikey',
+          (weather_apikey || '').trim()
+        );
+      }
 
-    if (background_type !== undefined) {
-      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('background_type', background_type);
-    }
+      if (app_password !== '******') {
+        const { hashPassword } = require('../config/password');
+        const rawPassword = (app_password || '').trim();
+        const storedPassword = rawPassword ? hashPassword(rawPassword) : '';
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('app_password', storedPassword);
+      }
 
-    if (background_url !== undefined) {
-      db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('background_url', background_url);
-    }
-  });
+      if (background_type !== undefined) {
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(
+          'background_type',
+          background_type
+        );
+      }
 
-  updateTx();
+      if (background_url !== undefined) {
+        db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run('background_url', background_url);
+      }
 
-  const currentApiKey = db.prepare('SELECT value FROM settings WHERE key = ?').get('weather_apikey')?.value || '';
-  const maskedApiKey = currentApiKey ? '******' : '';
+      const moduleMap = {
+        module_tasks_enabled,
+        module_calendar_enabled,
+        module_memos_enabled,
+        module_shopping_enabled,
+        module_weather_enabled
+      };
+      Object.entries(moduleMap).forEach(([key, val]) => {
+        if (val !== undefined) {
+          db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, val ? '1' : '0');
+        }
+      });
+    });
 
-  const currentPassword = db.prepare('SELECT value FROM settings WHERE key = ?').get('app_password')?.value || '';
-  const maskedPassword = currentPassword ? '******' : '';
+    updateTx();
 
-  res.json({
-    app_title: app_title.trim(),
-    tasks_per_page,
-    weather_apikey: maskedApiKey,
-    password_protection_enabled: !!password_protection_enabled,
-    app_password: maskedPassword,
-    background_type: background_type || 'none',
-    background_url: background_url || ''
-  });
-}));
+    const currentApiKey = db.prepare('SELECT value FROM settings WHERE key = ?').get('weather_apikey')?.value || '';
+    const maskedApiKey = currentApiKey ? '******' : '';
+
+    const currentPassword = db.prepare('SELECT value FROM settings WHERE key = ?').get('app_password')?.value || '';
+    const maskedPassword = currentPassword ? '******' : '';
+
+    const getModuleBool = (key) => {
+      const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+      return !row || (row.value !== '0' && row.value !== 'false');
+    };
+
+    res.json({
+      app_title: app_title.trim(),
+      tasks_per_page,
+      weather_apikey: maskedApiKey,
+      password_protection_enabled: !!password_protection_enabled,
+      app_password: maskedPassword,
+      background_type: background_type || 'none',
+      background_url: background_url || '',
+      module_tasks_enabled: getModuleBool('module_tasks_enabled'),
+      module_calendar_enabled: getModuleBool('module_calendar_enabled'),
+      module_memos_enabled: getModuleBool('module_memos_enabled'),
+      module_shopping_enabled: getModuleBool('module_shopping_enabled'),
+      module_weather_enabled: getModuleBool('module_weather_enabled')
+    });
+  })
+);
 
 // Authentication Status Check
-router.get('/auth-status', asyncHandler(async (req, res) => {
-  const rows = db.prepare('SELECT * FROM settings').all();
-  const settings = {};
-  rows.forEach((r) => (settings[r.key] = r.value));
+router.get(
+  '/auth-status',
+  asyncHandler(async (req, res) => {
+    const rows = db.prepare('SELECT * FROM settings').all();
+    const settings = {};
+    rows.forEach((r) => (settings[r.key] = r.value));
 
-  const isEnabled = settings.password_protection_enabled === '1' || settings.password_protection_enabled === 'true';
-  const hasPassword = !!(settings.app_password || '').trim();
+    const isEnabled = settings.password_protection_enabled === '1' || settings.password_protection_enabled === 'true';
+    const hasPassword = !!(settings.app_password || '').trim();
 
-  const clientPassword = req.headers['x-app-password'] || '';
-  const { verifyPassword, hashPassword, needsMigration } = require('../config/password');
-  const isValid = !isEnabled || !hasPassword || verifyPassword(clientPassword, settings.app_password);
+    const clientPassword = req.headers['x-app-password'] || '';
+    const { verifyPassword, hashPassword, needsMigration } = require('../config/password');
+    const isValid = !isEnabled || !hasPassword || verifyPassword(clientPassword, settings.app_password);
 
-  // Auto-migrate if password matches and is in legacy plain-text format
-  if (isEnabled && hasPassword && isValid && needsMigration(settings.app_password)) {
-    try {
-      const hashedPassword = hashPassword(clientPassword);
-      db.prepare("UPDATE settings SET value = ? WHERE key = 'app_password'").run(hashedPassword);
-      console.log('[Auth Status] Migrated legacy password to PBKDF2 hash.');
-    } catch (migrationErr) {
-      console.error('[Auth Status] Failed to auto-migrate legacy password:', migrationErr);
-    }
-  }
-
-  res.json({
-    enabled: isEnabled && hasPassword,
-    authenticated: isValid
-  });
-}));
-
-// Authenticate Simple Password
-router.post('/authenticate', asyncHandler(async (req, res) => {
-  const { password } = req.body;
-  const storedPassword = db.prepare("SELECT value FROM settings WHERE key = 'app_password'").get()?.value || '';
-  const { verifyPassword, hashPassword, needsMigration } = require('../config/password');
-  
-  if (verifyPassword(password || '', storedPassword)) {
-    // Auto-migrate on successful authentication
-    if (needsMigration(storedPassword)) {
+    // Auto-migrate if password matches and is in legacy plain-text format
+    if (isEnabled && hasPassword && isValid && needsMigration(settings.app_password)) {
       try {
-        const hashedPassword = hashPassword(password);
+        const hashedPassword = hashPassword(clientPassword);
         db.prepare("UPDATE settings SET value = ? WHERE key = 'app_password'").run(hashedPassword);
-        console.log('[Authenticate API] Migrated legacy password to PBKDF2 hash.');
+        console.log('[Auth Status] Migrated legacy password to PBKDF2 hash.');
       } catch (migrationErr) {
-        console.error('[Authenticate API] Failed to auto-migrate legacy password:', migrationErr);
+        console.error('[Auth Status] Failed to auto-migrate legacy password:', migrationErr);
       }
     }
-    res.json({ success: true });
-  } else {
-    res.status(401).json({ error: 'Incorrect password' });
-  }
-}));
+
+    res.json({
+      enabled: isEnabled && hasPassword,
+      authenticated: isValid
+    });
+  })
+);
+
+// Authenticate Simple Password
+router.post(
+  '/authenticate',
+  asyncHandler(async (req, res) => {
+    const { password } = req.body;
+    const storedPassword = db.prepare("SELECT value FROM settings WHERE key = 'app_password'").get()?.value || '';
+    const { verifyPassword, hashPassword, needsMigration } = require('../config/password');
+
+    if (verifyPassword(password || '', storedPassword)) {
+      // Auto-migrate on successful authentication
+      if (needsMigration(storedPassword)) {
+        try {
+          const hashedPassword = hashPassword(password);
+          db.prepare("UPDATE settings SET value = ? WHERE key = 'app_password'").run(hashedPassword);
+          console.log('[Authenticate API] Migrated legacy password to PBKDF2 hash.');
+        } catch (migrationErr) {
+          console.error('[Authenticate API] Failed to auto-migrate legacy password:', migrationErr);
+        }
+      }
+      res.json({ success: true });
+    } else {
+      res.status(401).json({ error: 'Incorrect password' });
+    }
+  })
+);
 
 // GET background image
-router.get('/background', asyncHandler(async (req, res) => {
-  const filePath = getBackgroundPath();
-  if (fs.existsSync(filePath)) {
-    res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
-    res.sendFile(filePath);
-  } else {
-    res.status(404).json({ error: 'No custom background active.' });
-  }
-}));
+router.get(
+  '/background',
+  asyncHandler(async (req, res) => {
+    const filePath = getBackgroundPath();
+    if (fs.existsSync(filePath)) {
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 1 day
+      res.sendFile(filePath);
+    } else {
+      res.status(404).json({ error: 'No custom background active.' });
+    }
+  })
+);
 
 // POST save background image from base64
-router.post('/background', asyncHandler(async (req, res) => {
-  const { image } = req.body;
-  if (!image) {
-    return res.status(400).json({ error: 'Image data is required.' });
-  }
-  const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
-  const buffer = Buffer.from(base64Data, 'base64');
-  fs.writeFileSync(getBackgroundPath(), buffer);
-  res.json({ success: true });
-}));
+router.post(
+  '/background',
+  asyncHandler(async (req, res) => {
+    const { image } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: 'Image data is required.' });
+    }
+    const base64Data = image.replace(/^data:image\/\w+;base64,/, '');
+    const buffer = Buffer.from(base64Data, 'base64');
+    fs.writeFileSync(getBackgroundPath(), buffer);
+    res.json({ success: true });
+  })
+);
 
 function isPrivateIP(ipAddress) {
   if (!ipAddress || ipAddress === '::1' || ipAddress === '0.0.0.0' || ipAddress === '::') return true;
-  
+
   if (ipAddress.includes(':')) {
     const cleanIp = ipAddress.toLowerCase();
     if (
@@ -253,37 +310,40 @@ function fetchSafeImage(urlString) {
       const safeIp = addresses[0];
       const client = parsed.protocol === 'https:' ? https : http;
 
-      const req = client.request({
-        method: 'GET',
-        hostname: parsed.hostname,
-        port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
-        path: parsed.pathname + parsed.search,
-        headers: {
-          'User-Agent': 'HomeBoard-SSRF-Filter/1.0'
+      const req = client.request(
+        {
+          method: 'GET',
+          hostname: parsed.hostname,
+          port: parsed.port || (parsed.protocol === 'https:' ? 443 : 80),
+          path: parsed.pathname + parsed.search,
+          headers: {
+            'User-Agent': 'HomeBoard-SSRF-Filter/1.0'
+          },
+          lookup: (host, opts, cb) => {
+            cb(null, safeIp, safeIp.includes(':') ? 6 : 4);
+          },
+          timeout: 5000
         },
-        lookup: (host, opts, cb) => {
-          cb(null, safeIp, safeIp.includes(':') ? 6 : 4);
-        },
-        timeout: 5000
-      }, (response) => {
-        if (response.statusCode < 200 || response.statusCode >= 300) {
-          return reject(new Error(`HTTP ${response.statusCode}`));
-        }
+        (response) => {
+          if (response.statusCode < 200 || response.statusCode >= 300) {
+            return reject(new Error(`HTTP ${response.statusCode}`));
+          }
 
-        const contentType = response.headers['content-type'] || '';
-        if (!contentType.startsWith('image/')) {
-          return reject(new Error('Fetched URL is not an image'));
-        }
+          const contentType = response.headers['content-type'] || '';
+          if (!contentType.startsWith('image/')) {
+            return reject(new Error('Fetched URL is not an image'));
+          }
 
-        const chunks = [];
-        response.on('data', (chunk) => chunks.push(chunk));
-        response.on('end', () => {
-          resolve({
-            contentType,
-            buffer: Buffer.concat(chunks)
+          const chunks = [];
+          response.on('data', (chunk) => chunks.push(chunk));
+          response.on('end', () => {
+            resolve({
+              contentType,
+              buffer: Buffer.concat(chunks)
+            });
           });
-        });
-      });
+        }
+      );
 
       req.on('error', (err) => {
         reject(err);
@@ -302,27 +362,33 @@ function fetchSafeImage(urlString) {
 }
 
 // POST proxy external image download
-router.post('/background/fetch-external', asyncHandler(async (req, res) => {
-  const { url } = req.body;
-  if (!url) {
-    return res.status(400).json({ error: 'URL is required.' });
-  }
-  try {
-    const { contentType, buffer } = await fetchSafeImage(url);
-    const base64 = buffer.toString('base64');
-    res.json({ contentType, data: base64 });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-}));
+router.post(
+  '/background/fetch-external',
+  asyncHandler(async (req, res) => {
+    const { url } = req.body;
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required.' });
+    }
+    try {
+      const { contentType, buffer } = await fetchSafeImage(url);
+      const base64 = buffer.toString('base64');
+      res.json({ contentType, data: base64 });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  })
+);
 
 // DELETE clear background image
-router.delete('/background', asyncHandler(async (req, res) => {
-  const filePath = getBackgroundPath();
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath);
-  }
-  res.json({ success: true });
-}));
+router.delete(
+  '/background',
+  asyncHandler(async (req, res) => {
+    const filePath = getBackgroundPath();
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    res.json({ success: true });
+  })
+);
 
 module.exports = router;

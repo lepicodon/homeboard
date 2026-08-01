@@ -11,13 +11,7 @@ const PBKDF2_ALGO = 'sha256';
 function hashPassword(password) {
   if (typeof password !== 'string') return '';
   const salt = crypto.randomBytes(16).toString('hex');
-  const hash = crypto.pbkdf2Sync(
-    password.trim(),
-    salt,
-    PBKDF2_ITERATIONS,
-    PBKDF2_KEY_LEN,
-    PBKDF2_ALGO
-  ).toString('hex');
+  const hash = crypto.pbkdf2Sync(password.trim(), salt, PBKDF2_ITERATIONS, PBKDF2_KEY_LEN, PBKDF2_ALGO).toString('hex');
   return `$pbkdf2$${PBKDF2_ITERATIONS}$${salt}$${hash}`;
 }
 
@@ -28,26 +22,20 @@ function verifyPassword(password, storedPassword) {
   if (!storedPassword || storedPassword.trim() === '') {
     return (password || '').trim() === '';
   }
-  
+
   if (storedPassword.startsWith('$pbkdf2$')) {
     const parts = storedPassword.split('$');
     if (parts.length !== 5) return false;
-    
+
     const iterations = parseInt(parts[2], 10);
     const salt = parts[3];
     const storedHash = parts[4];
-    
-    const hash = crypto.pbkdf2Sync(
-      password.trim(),
-      salt,
-      iterations,
-      PBKDF2_KEY_LEN,
-      PBKDF2_ALGO
-    ).toString('hex');
-    
+
+    const hash = crypto.pbkdf2Sync(password.trim(), salt, iterations, PBKDF2_KEY_LEN, PBKDF2_ALGO).toString('hex');
+
     return crypto.timingSafeEqual(Buffer.from(hash, 'hex'), Buffer.from(storedHash, 'hex'));
   }
-  
+
   // Fallback for legacy plain-text passwords
   return password.trim() === storedPassword;
 }

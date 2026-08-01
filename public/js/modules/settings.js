@@ -136,7 +136,7 @@ export function renderMembers() {
     familyCheckboxList.innerHTML = '';
     if (state.members.length === 0) {
       familyCheckboxList.innerHTML =
-        '<p style="font-size: 13px; color: var(--text-muted); font-style: italic;">No family members defined. Add them in Settings.</p>';
+        '<p style="font-size: 13px; color: var(--text-muted); font-style: italic;">No users defined. Add them in Settings.</p>';
     } else {
       state.members.forEach((m) => {
         familyCheckboxList.innerHTML += `
@@ -177,8 +177,8 @@ export function renderMembers() {
           <span class="settings-item-name">${escapeHTML(m.name)}</span>
         </div>
         <div class="settings-item-actions">
-          <button class="btn-action edit" title="Edit Member">✏️</button>
-          <button class="btn-action delete" title="Delete Member">🗑️</button>
+          <button class="btn-action edit" title="Edit User">✏️</button>
+          <button class="btn-action delete" title="Delete User">🗑️</button>
         </div>
       `;
 
@@ -217,7 +217,7 @@ export async function handleMemberFormSubmit(e) {
     fetchTasks();
   } catch (err) {
     console.error('Error saving member:', err);
-    showToast(err.message || 'Failed to save family member', 'error');
+    showToast(err.message || 'Failed to save user', 'error');
   }
 }
 
@@ -238,7 +238,7 @@ export function startEditMember(m) {
     memberNameInput.focus();
   }
   if (memberColorInput) memberColorInput.value = m.color;
-  if (memberFormTitle) memberFormTitle.textContent = 'Edit Family Member';
+  if (memberFormTitle) memberFormTitle.textContent = 'Edit User';
   if (memberFormSubmitBtn) memberFormSubmitBtn.textContent = 'Save Changes';
   if (cancelMemberEditBtn) cancelMemberEditBtn.classList.remove('hidden');
 
@@ -271,8 +271,8 @@ export function resetMemberForm() {
 
   if (addMemberForm) addMemberForm.reset();
   if (memberIdField) memberIdField.value = '';
-  if (memberFormTitle) memberFormTitle.textContent = 'Family Members';
-  if (memberFormSubmitBtn) memberFormSubmitBtn.textContent = 'Add Family Member';
+  if (memberFormTitle) memberFormTitle.textContent = 'Users';
+  if (memberFormSubmitBtn) memberFormSubmitBtn.textContent = 'Add User';
   if (cancelMemberEditBtn) cancelMemberEditBtn.classList.add('hidden');
 
   if (memberAvatar) memberAvatar.value = '';
@@ -486,6 +486,45 @@ export function initSystemSettingsEvents() {
       } catch (err) {
         console.error('Error saving settings:', err);
         showToast('Failed to save settings.', 'error');
+      }
+    });
+  }
+}
+
+export function initModuleSettingsEvents() {
+  const moduleSettingsForm = document.getElementById('moduleSettingsForm');
+  if (moduleSettingsForm) {
+    moduleSettingsForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const settingModuleTasks = document.getElementById('settingModuleTasks');
+      const settingModuleCalendar = document.getElementById('settingModuleCalendar');
+      const settingModuleMemos = document.getElementById('settingModuleMemos');
+      const settingModuleShopping = document.getElementById('settingModuleShopping');
+      const settingModuleWeather = document.getElementById('settingModuleWeather');
+
+      const module_tasks_enabled = settingModuleTasks ? settingModuleTasks.checked : true;
+      const module_calendar_enabled = settingModuleCalendar ? settingModuleCalendar.checked : true;
+      const module_memos_enabled = settingModuleMemos ? settingModuleMemos.checked : true;
+      const module_shopping_enabled = settingModuleShopping ? settingModuleShopping.checked : true;
+      const module_weather_enabled = settingModuleWeather ? settingModuleWeather.checked : true;
+
+      try {
+        const currentSettings = await api.getSettings();
+        await api.saveSettings({
+          ...currentSettings,
+          weather_apikey: '******',
+          app_password: '******',
+          module_tasks_enabled,
+          module_calendar_enabled,
+          module_memos_enabled,
+          module_shopping_enabled,
+          module_weather_enabled
+        });
+        await fetchSettings();
+        showToast('Module settings saved successfully!', 'success');
+      } catch (err) {
+        console.error('Error saving module settings:', err);
+        showToast('Failed to save module settings.', 'error');
       }
     });
   }
@@ -722,6 +761,7 @@ export function initSettingsEvents() {
 
   initAvatarUpload();
   initSystemSettingsEvents();
+  initModuleSettingsEvents();
   initBackgroundEvents();
   initPasswordEvents();
   initWeatherSettingsEvents();

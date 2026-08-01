@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HomeBoard - Family Management</title>
+    <title>HomeBoard - Dashboard Management</title>
     <meta
       name="description"
       content="A lightweight, modern, responsive family task tracker. Organize your household chores."
@@ -90,7 +90,7 @@
 
             <!-- Sidebar Stats Panel -->
             <div class="sidebar-stats">
-              <div class="stats-title">Today's Progress</div>
+              <div class="stats-title">Overall Progress</div>
               <div class="stats-bar-container">
                 <div class="stats-bar" id="progressBar" style="width: 0%"></div>
               </div>
@@ -535,7 +535,7 @@
           <header class="page-header">
             <div class="header-titles">
               <h1>Settings</h1>
-              <p class="header-subtitle">Manage family members, categories and lists</p>
+              <p class="header-subtitle">Manage users, categories and lists</p>
             </div>
           </header>
 
@@ -547,7 +547,7 @@
             </button>
             <button type="button" class="settings-tab-btn" data-tab="family">
               <span>👥</span>
-              <span>Family Members</span>
+              <span>Users</span>
             </button>
             <button type="button" class="settings-tab-btn" data-tab="categories">
               <span>🏷️</span>
@@ -591,6 +591,68 @@
                     </div>
                     <div class="settings-form-actions">
                       <button type="submit" class="btn btn-primary w-full">Save System Settings</button>
+                    </div>
+                  </form>
+                </div>
+
+                <!-- Module Settings card -->
+                <div class="settings-card">
+                  <div class="card-header">
+                    <span class="card-header-icon">🧩</span>
+                    <h2>Module Settings</h2>
+                  </div>
+
+                  <form id="moduleSettingsForm" class="settings-form">
+                    <div class="form-group" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px">
+                      <label style="font-weight: 600; margin-bottom: 4px">Enable / Disable Modules</label>
+                      <div style="display: flex; align-items: center; gap: 10px">
+                        <input
+                          type="checkbox"
+                          id="settingModuleTasks"
+                          style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
+                          checked
+                        />
+                        <label for="settingModuleTasks" style="margin-bottom: 0; cursor: pointer">📋 Tasks Module</label>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 10px">
+                        <input
+                          type="checkbox"
+                          id="settingModuleCalendar"
+                          style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
+                          checked
+                        />
+                        <label for="settingModuleCalendar" style="margin-bottom: 0; cursor: pointer">📅 Calendar Module</label>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 10px">
+                        <input
+                          type="checkbox"
+                          id="settingModuleMemos"
+                          style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
+                          checked
+                        />
+                        <label for="settingModuleMemos" style="margin-bottom: 0; cursor: pointer">📌 Memos Module</label>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 10px">
+                        <input
+                          type="checkbox"
+                          id="settingModuleShopping"
+                          style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
+                          checked
+                        />
+                        <label for="settingModuleShopping" style="margin-bottom: 0; cursor: pointer">🛒 Shopping Module</label>
+                      </div>
+                      <div style="display: flex; align-items: center; gap: 10px">
+                        <input
+                          type="checkbox"
+                          id="settingModuleWeather"
+                          style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
+                          checked
+                        />
+                        <label for="settingModuleWeather" style="margin-bottom: 0; cursor: pointer">🌤️ Weather Module</label>
+                      </div>
+                    </div>
+                    <div class="settings-form-actions">
+                      <button type="submit" class="btn btn-primary w-full">Save Module Settings</button>
                     </div>
                   </form>
                 </div>
@@ -646,12 +708,12 @@
               </div>
             </div>
 
-            <!-- Family Members Tab -->
+            <!-- Users Tab -->
             <div id="settings-tab-family" class="settings-tab-panel">
               <div class="settings-card">
                 <div class="card-header">
                   <span class="card-header-icon">👥</span>
-                  <h2 id="memberFormTitle">Family Members</h2>
+                  <h2 id="memberFormTitle">Users</h2>
                 </div>
 
                 <div class="settings-split-layout">
@@ -683,7 +745,7 @@
 
                     <div class="form-row">
                       <div class="form-group flex-grow">
-                        <label for="memberName">Member Name</label>
+                        <label for="memberName">User Name</label>
                         <input type="text" id="memberName" required placeholder="e.g. Alice, Bob" />
                       </div>
                       <div class="form-group">
@@ -696,14 +758,14 @@
 
                     <div class="settings-form-actions">
                       <button type="submit" id="memberFormSubmitBtn" class="btn btn-primary flex-grow">
-                        Add Family Member
+                        Add User
                       </button>
                       <button type="button" id="cancelMemberEditBtn" class="btn btn-secondary hidden">Cancel</button>
                     </div>
                   </form>
 
                   <div class="settings-list-container">
-                    <h3>Existing Members</h3>
+                    <h3>Existing Users</h3>
                     <ul id="membersList" class="settings-list">
                       <!-- Dynamically populated -->
                     </ul>
@@ -923,9 +985,9 @@
                   </div>
                   <form id="restoreForm" class="settings-form">
                     <div class="form-group">
-                      <label for="restoreFileInput">Choose Backup File (.db.gz or .db.gz.enc)</label>
-                      <br/>
-                      <input type="file" id="restoreFileInput" accept=".gz,.enc" />
+                      <label for="restoreFileInput">Choose Backup File (.db, .gz, or .enc)</label>
+                      <br />
+                      <input type="file" id="restoreFileInput" accept=".db,.gz,.enc,.sqlite" />
                     </div>
                     <div class="settings-form-actions">
                       <button type="submit" class="btn btn-danger w-full" id="startRestoreBtn">Restore Database</button>
@@ -996,7 +1058,7 @@
               <select id="taskAssignedType">
                 <option value="unassigned">❔ Unassigned</option>
                 <option value="other">👤 Other / External</option>
-                <option value="members">👨‍👩‍👧‍👦 Family Members</option>
+                <option value="members">👥 Users</option>
               </select>
             </div>
 
@@ -1025,9 +1087,9 @@
             <input type="text" id="taskOtherAssignee" placeholder="e.g. Plumber, Guest, School" />
           </div>
 
-          <!-- Conditional Family Members multi-checkbox list -->
+          <!-- Conditional Users multi-checkbox list -->
           <div id="familyAssigneeGroup" class="form-group hidden animate-fade-in">
-            <label>Select Family Member(s)</label>
+            <label>Select User(s)</label>
             <div id="familyCheckboxList" class="family-checkbox-list">
               <!-- Dynamically populated checkboxes -->
             </div>
@@ -1139,7 +1201,7 @@
 
         <div class="modal-body">
           <p class="warning-text" style="color: var(--danger-color); font-weight: bold; margin-bottom: 12px">
-            ⚠️ WARNING: This will overwrite all current tasks, family members, categories, memos, and settings. This
+            ⚠️ WARNING: This will overwrite all current tasks, users, categories, memos, and settings. This
             action cannot be undone!
           </p>
           <div id="restorePasswordGroup" class="form-group hidden">

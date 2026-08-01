@@ -2,7 +2,7 @@ function errorHandler(err, req, res, _next) {
   console.error('[Error Handler] Caught error:', err);
 
   const statusCode = res.statusCode !== 200 ? res.statusCode : 500;
-  
+
   if (err.message && err.message.includes('UNIQUE constraint failed')) {
     return res.status(400).json({ error: err.message });
   }

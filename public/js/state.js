@@ -26,5 +26,12 @@ export const state = {
   currentDeletingItem: { type: null, id: null },
   backgroundType: 'none',
   backgroundUrl: '',
-  weatherUnit: localStorage.getItem('weather-unit') || 'C'
+  weatherUnit: localStorage.getItem('weather-unit') || 'C',
+  modules: {
+    tasks: true,
+    calendar: true,
+    memos: true,
+    shopping: true,
+    weather: true
+  }
 };

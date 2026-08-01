@@ -20,11 +20,11 @@ function authMiddleware(req, res, next) {
     if (isEnabled && savedPassword) {
       const clientPassword = req.headers['x-app-password'] || '';
       const { verifyPassword, hashPassword, needsMigration } = require('../config/password');
-      
+
       if (!verifyPassword(clientPassword, savedPassword)) {
         return res.status(401).json({ error: 'Authentication required' });
       }
-      
+
       // Auto-migrate legacy plain-text password on successful login
       if (needsMigration(savedPassword)) {
         try {

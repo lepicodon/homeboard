@@ -40,7 +40,7 @@ export function showToast(message, type = 'success', duration = 4000) {
 
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
-  
+
   const textNode = document.createElement('span');
   textNode.innerText = message;
   toast.appendChild(textNode);

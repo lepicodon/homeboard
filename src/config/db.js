@@ -421,6 +421,11 @@ function runMigrations(db) {
     insertSetting.run('app_password', '');
     insertSetting.run('background_type', 'none');
     insertSetting.run('background_url', '');
+    insertSetting.run('module_tasks_enabled', '1');
+    insertSetting.run('module_calendar_enabled', '1');
+    insertSetting.run('module_memos_enabled', '1');
+    insertSetting.run('module_shopping_enabled', '1');
+    insertSetting.run('module_weather_enabled', '1');
   } else {
     // Ensure all keys exist for existing tables
     db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('app_title', 'HomeBoard');
@@ -431,6 +436,11 @@ function runMigrations(db) {
     db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('app_password', '');
     db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('background_type', 'none');
     db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('background_url', '');
+    db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('module_tasks_enabled', '1');
+    db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('module_calendar_enabled', '1');
+    db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('module_memos_enabled', '1');
+    db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('module_shopping_enabled', '1');
+    db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('module_weather_enabled', '1');
   }
 }
 

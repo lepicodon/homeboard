@@ -81,8 +81,17 @@ function applyTheme(theme) {
   }
 }
 
-// --- SPA Navigation ---
-function initNavigation() {
+// --- SPA Navigation & Module Helper Functions ---
+export function getFirstEnabledModuleHash() {
+  if (state.modules.tasks) return '#tasks';
+  if (state.modules.calendar) return '#calendar';
+  if (state.modules.memos) return '#memos';
+  if (state.modules.shopping) return '#shopping';
+  if (state.modules.weather) return '#weather';
+  return '#settings';
+}
+
+export function handleNav(hash) {
   const navTasks = document.getElementById('navTasks');
   const navCalendar = document.getElementById('navCalendar');
   const navMemos = document.getElementById('navMemos');
@@ -97,39 +106,91 @@ function initNavigation() {
   const weatherPage = document.getElementById('weatherPage');
   const settingsPage = document.getElementById('settingsPage');
 
-  const handleNav = (hash) => {
-    document.querySelectorAll('.nav-item').forEach((item) => item.classList.remove('active'));
-    document.querySelectorAll('.page-panel').forEach((page) => page.classList.remove('active'));
+  let target = hash ? hash.replace('#', '') : 'tasks';
+  if (!target) target = 'tasks';
 
-    if (hash === '#settings') {
-      if (navSettings) navSettings.classList.add('active');
-      if (settingsPage) settingsPage.classList.add('active');
-    } else if (hash === '#calendar') {
-      if (navCalendar) navCalendar.classList.add('active');
-      if (calendarPage) calendarPage.classList.add('active');
-      renderCalendar();
-    } else if (hash === '#memos') {
-      if (navMemos) navMemos.classList.add('active');
-      if (memosPage) memosPage.classList.add('active');
-      fetchMemos();
-    } else if (hash === '#shopping') {
-      if (navShopping) navShopping.classList.add('active');
-      if (shoppingPage) shoppingPage.classList.add('active');
-      fetchShoppingLists().then(() => {
-        fetchShopping();
-      });
-    } else if (hash === '#weather') {
-      if (navWeather) navWeather.classList.add('active');
-      if (weatherPage) weatherPage.classList.add('active');
-      fetchWeatherLocations().then(() => {
-        fetchWeather();
-      });
-    } else {
-      if (navTasks) navTasks.classList.add('active');
-      if (tasksPage) tasksPage.classList.add('active');
-      renderTasks();
-    }
-  };
+  if (target !== 'settings' && state.modules && !state.modules[target]) {
+    hash = getFirstEnabledModuleHash();
+    target = hash.replace('#', '');
+  }
+
+  document.querySelectorAll('.nav-item').forEach((item) => item.classList.remove('active'));
+  document.querySelectorAll('.page-panel').forEach((page) => page.classList.remove('active'));
+
+  if (target === 'settings') {
+    if (navSettings) navSettings.classList.add('active');
+    if (settingsPage) settingsPage.classList.add('active');
+  } else if (target === 'calendar') {
+    if (navCalendar) navCalendar.classList.add('active');
+    if (calendarPage) calendarPage.classList.add('active');
+    renderCalendar();
+  } else if (target === 'memos') {
+    if (navMemos) navMemos.classList.add('active');
+    if (memosPage) memosPage.classList.add('active');
+    fetchMemos();
+  } else if (target === 'shopping') {
+    if (navShopping) navShopping.classList.add('active');
+    if (shoppingPage) shoppingPage.classList.add('active');
+    fetchShoppingLists().then(() => {
+      fetchShopping();
+    });
+  } else if (target === 'weather') {
+    if (navWeather) navWeather.classList.add('active');
+    if (weatherPage) weatherPage.classList.add('active');
+    fetchWeatherLocations().then(() => {
+      fetchWeather();
+    });
+  } else {
+    if (navTasks) navTasks.classList.add('active');
+    if (tasksPage) tasksPage.classList.add('active');
+    renderTasks();
+  }
+}
+
+export function applyModuleVisibility() {
+  const navTasks = document.getElementById('navTasks');
+  const navCalendar = document.getElementById('navCalendar');
+  const navMemos = document.getElementById('navMemos');
+  const navShopping = document.getElementById('navShopping');
+  const navWeather = document.getElementById('navWeather');
+  const sidebarWeatherWidget = document.getElementById('sidebarWeatherWidget');
+  const sidebarStats = document.querySelector('.sidebar-stats');
+
+  if (navTasks) navTasks.style.display = state.modules.tasks ? '' : 'none';
+  if (navCalendar) navCalendar.style.display = state.modules.calendar ? '' : 'none';
+  if (navMemos) navMemos.style.display = state.modules.memos ? '' : 'none';
+  if (navShopping) navShopping.style.display = state.modules.shopping ? '' : 'none';
+  if (navWeather) navWeather.style.display = state.modules.weather ? '' : 'none';
+
+  if (sidebarWeatherWidget) sidebarWeatherWidget.style.display = state.modules.weather ? '' : 'none';
+  if (sidebarStats) sidebarStats.style.display = state.modules.tasks ? '' : 'none';
+
+  const currentHash = window.location.hash || '#tasks';
+  const targetModule = currentHash.replace('#', '');
+  if (targetModule !== 'settings' && (!state.modules || !state.modules[targetModule])) {
+    const fallbackHash = getFirstEnabledModuleHash();
+    history.replaceState(null, '', fallbackHash);
+    handleNav(fallbackHash);
+  }
+}
+
+function initNavigation() {
+  const navTasks = document.getElementById('navTasks');
+  const navCalendar = document.getElementById('navCalendar');
+  const navMemos = document.getElementById('navMemos');
+  const navShopping = document.getElementById('navShopping');
+  const navWeather = document.getElementById('navWeather');
+  const navSettings = document.getElementById('navSettings');
+  const logoLink = document.getElementById('logoLink');
+
+  if (logoLink) {
+    logoLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetHash = getFirstEnabledModuleHash();
+      history.pushState(null, '', targetHash);
+      handleNav(targetHash);
+    });
+  }
 
   if (navTasks) {
     navTasks.addEventListener('click', (e) => {
@@ -265,7 +326,7 @@ export function confirmDelete(type, id, displayName) {
   } else if (type === 'category') {
     deleteMessage.textContent = `Are you sure you want to delete the category "${displayName}"? Tasks in this category will become uncategorized.`;
   } else if (type === 'member') {
-    deleteMessage.textContent = `Are you sure you want to delete family member "${displayName}"? They will be unassigned from any tasks.`;
+    deleteMessage.textContent = `Are you sure you want to delete user "${displayName}"? They will be unassigned from any tasks.`;
   } else if (type === 'memo') {
     deleteMessage.textContent = `Are you sure you want to delete this memo note?`;
   } else if (type === 'shoppingCategory') {
@@ -361,8 +422,15 @@ export async function fetchSettings() {
     state.tasksPerPage = settings.tasks_per_page || '10';
     state.backgroundType = settings.background_type || 'none';
     state.backgroundUrl = settings.background_url || '';
+    state.modules = {
+      tasks: settings.module_tasks_enabled !== false && settings.module_tasks_enabled !== '0',
+      calendar: settings.module_calendar_enabled !== false && settings.module_calendar_enabled !== '0',
+      memos: settings.module_memos_enabled !== false && settings.module_memos_enabled !== '0',
+      shopping: settings.module_shopping_enabled !== false && settings.module_shopping_enabled !== '0',
+      weather: settings.module_weather_enabled !== false && settings.module_weather_enabled !== '0'
+    };
 
-    document.title = `${state.appTitle} - Family Management`;
+    document.title = `${state.appTitle} - Dashboard Management`;
     document.querySelectorAll('.logo-text').forEach((el) => (el.textContent = state.appTitle));
 
     const settingAppTitle = document.getElementById('settingAppTitle');
@@ -372,6 +440,12 @@ export async function fetchSettings() {
     const settingAppPassword = document.getElementById('settingAppPassword');
     const settingBackgroundUrl = document.getElementById('settingBackgroundUrl');
 
+    const settingModuleTasks = document.getElementById('settingModuleTasks');
+    const settingModuleCalendar = document.getElementById('settingModuleCalendar');
+    const settingModuleMemos = document.getElementById('settingModuleMemos');
+    const settingModuleShopping = document.getElementById('settingModuleShopping');
+    const settingModuleWeather = document.getElementById('settingModuleWeather');
+
     if (settingAppTitle) settingAppTitle.value = state.appTitle;
     if (settingTasksPerPage) settingTasksPerPage.value = state.tasksPerPage;
     if (settingWeatherApiKey) settingWeatherApiKey.value = settings.weather_apikey || '';
@@ -379,7 +453,14 @@ export async function fetchSettings() {
     if (settingAppPassword) settingAppPassword.value = settings.app_password || '';
     if (settingBackgroundUrl) settingBackgroundUrl.value = state.backgroundUrl;
 
+    if (settingModuleTasks) settingModuleTasks.checked = state.modules.tasks;
+    if (settingModuleCalendar) settingModuleCalendar.checked = state.modules.calendar;
+    if (settingModuleMemos) settingModuleMemos.checked = state.modules.memos;
+    if (settingModuleShopping) settingModuleShopping.checked = state.modules.shopping;
+    if (settingModuleWeather) settingModuleWeather.checked = state.modules.weather;
+
     applyBackground();
+    applyModuleVisibility();
 
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
