@@ -17,8 +17,13 @@ app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 app.use(
   express.static(path.join(__dirname, 'public'), {
-    maxAge: '1d',
-    etag: true
+    maxAge: '1h',
+    etag: true,
+    setHeaders: (res, filePath) => {
+      if (filePath.endsWith('.html')) {
+        res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      }
+    }
   })
 );
 

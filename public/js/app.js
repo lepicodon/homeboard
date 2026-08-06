@@ -597,6 +597,7 @@ export async function fetchCategories() {
   try {
     state.categories = await api.getCategories();
     renderCategories();
+    renderTasks();
   } catch (err) {
     console.error('Error fetching categories:', err);
   }
@@ -607,6 +608,7 @@ export async function fetchMembers() {
     state.members = await api.getMembers();
     state.members.sort((a, b) => a.name.localeCompare(b.name));
     renderMembers();
+    renderTasks();
   } catch (err) {
     console.error('Error fetching members:', err);
   }
