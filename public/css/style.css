@@ -628,167 +628,6 @@ body {
   gap: 20px;
 }
 
-/* ASSIGNEE VIEW */
-.tasks-grid.assignee-view {
-  display: flex;
-  gap: 16px;
-  width: 100%;
-  overflow-x: auto;
-  padding-bottom: 16px;
-  align-items: flex-start;
-}
-
-.assignee-column {
-  flex: 1 1 0;
-  min-width: 220px;
-  background-color: var(--bg-card);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-lg);
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: var(--shadow-sm);
-}
-
-.assignee-column-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 10px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.assignee-header-info {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.assignee-column-title {
-  font-weight: 700;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.assignee-avatar-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-}
-
-.assignee-count-badge {
-  background-color: var(--bg-main, rgba(255, 255, 255, 0.1));
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 12px;
-  border: 1px solid var(--border-color);
-}
-
-.assignee-column-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  min-height: 80px;
-}
-
-.assignee-column-empty {
-  text-align: center;
-  padding: 20px 12px;
-  color: var(--text-muted);
-  font-size: 12px;
-  font-style: italic;
-  background: var(--bg-main, rgba(0, 0, 0, 0.05));
-  border: 1px dashed var(--border-color);
-  border-radius: var(--border-radius-md);
-}
-
-/* Compact Task Cards in Assignee View (Low Height) */
-.tasks-grid.assignee-view .task-card {
-  padding: 8px 10px;
-  gap: 6px;
-  border-radius: var(--border-radius-md);
-  font-size: 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
-}
-
-.tasks-grid.assignee-view .task-card:hover {
-  transform: translateY(-1px);
-}
-
-.tasks-grid.assignee-view .task-header {
-  gap: 6px;
-}
-
-.tasks-grid.assignee-view .task-title {
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.25;
-  margin: 0;
-}
-
-.tasks-grid.assignee-view .task-desc {
-  font-size: 11px;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  color: var(--text-muted);
-}
-
-.tasks-grid.assignee-view .task-tags {
-  gap: 3px;
-}
-
-.tasks-grid.assignee-view .tag {
-  font-size: 9.5px;
-  padding: 1px 5px;
-  border-radius: 4px;
-}
-
-.tasks-grid.assignee-view .due-badge {
-  font-size: 10px;
-  padding: 1px 5px;
-}
-
-.tasks-grid.assignee-view .task-body {
-  gap: 4px;
-}
-
-.tasks-grid.assignee-view .task-meta {
-  gap: 4px;
-}
-
-.tasks-grid.assignee-view .meta-row {
-  gap: 4px;
-  font-size: 11px;
-}
-
-.tasks-grid.assignee-view .task-timestamps {
-  display: none;
-}
-
-.tasks-grid.assignee-view .badge-assignees {
-  display: none;
-}
-
-.tasks-grid.assignee-view .task-footer {
-  margin-top: 2px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border-color);
-  gap: 4px;
-}
-
-.tasks-grid.assignee-view .btn-action {
-  padding: 3px 6px;
-  font-size: 11px;
-  border-radius: var(--border-radius-sm);
-}
-
 /* Task Card */
 .task-card {
   background-color: var(--bg-card);
@@ -2981,79 +2820,6 @@ dialog[open]::backdrop {
     white-space: pre-line;
   }
 
-  /* Assignee View Print Layout */
-  .print-assignee-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 20px;
-    margin-top: 16px;
-  }
-
-  .print-assignee-section {
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    padding: 12px;
-    page-break-inside: avoid;
-    background-color: #fafafa;
-  }
-
-  .print-assignee-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #ddd;
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-  }
-
-  .print-assignee-header h3 {
-    margin: 0;
-    font-size: 13pt;
-    font-weight: bold;
-  }
-
-  .print-assignee-count {
-    font-size: 10pt;
-    color: #666;
-  }
-
-  .print-assignee-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .print-assignee-item {
-    display: flex;
-    gap: 10px;
-    align-items: flex-start;
-    padding-bottom: 8px;
-    border-bottom: 1px dashed #eee;
-  }
-
-  .print-assignee-item:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
-  }
-
-  .print-assignee-item-details {
-    flex: 1;
-  }
-
-  .print-assignee-meta {
-    display: flex;
-    gap: 6px;
-    margin-top: 4px;
-    font-size: 9pt;
-  }
-
-  .print-meta-badge {
-    background-color: #eee;
-    padding: 1px 6px;
-    border-radius: 3px;
-    font-size: 8.5pt;
-  }
-
   /* Shopping list printable items layout */
   .print-shopping-category {
     margin-bottom: 24px;
@@ -3798,4 +3564,218 @@ html[data-theme='light'] body.has-background .app-container {
 
 .toast-close:hover {
   color: var(--text-primary);
+}
+
+/* ==========================================================================
+   Assignee View Board & Cards
+   ========================================================================== */
+.tasks-grid.assignee-view {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 16px;
+  align-items: flex-start;
+}
+
+.assignee-column {
+  flex: 1 1 0;
+  min-width: 220px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  box-shadow: var(--shadow-sm);
+}
+
+.assignee-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.assignee-header-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.assignee-column-title {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--text-primary);
+}
+
+.assignee-avatar-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+}
+
+.assignee-count-badge {
+  background-color: var(--bg-main, rgba(255, 255, 255, 0.1));
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 12px;
+  border: 1px solid var(--border-color);
+}
+
+.assignee-column-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 80px;
+}
+
+.assignee-column-empty {
+  text-align: center;
+  padding: 20px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-style: italic;
+  background: var(--bg-main, rgba(0, 0, 0, 0.05));
+  border: 1px dashed var(--border-color);
+  border-radius: var(--border-radius-md);
+}
+
+/* Compact Task Cards in Assignee View (Only Tags, Checkbox, Title, Notes) */
+.tasks-grid.assignee-view .task-card {
+  padding: 10px 12px;
+  gap: 6px;
+  border-radius: var(--border-radius-md);
+  font-size: 13px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+}
+
+.tasks-grid.assignee-view .task-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent-color);
+  box-shadow: var(--shadow-md);
+}
+
+.tasks-grid.assignee-view .task-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.tasks-grid.assignee-view .task-title {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.tasks-grid.assignee-view .task-desc {
+  font-size: 12px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-muted);
+}
+
+.tasks-grid.assignee-view .task-tags {
+  gap: 4px;
+}
+
+.tasks-grid.assignee-view .tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.tasks-grid.assignee-view .task-body {
+  gap: 4px;
+}
+
+.tasks-grid.assignee-view .task-meta,
+.tasks-grid.assignee-view .task-timestamps,
+.tasks-grid.assignee-view .task-footer {
+  display: none !important;
+}
+
+@media print {
+  .print-assignee-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+  }
+
+  .print-assignee-section {
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    padding: 12px;
+    page-break-inside: avoid;
+    background-color: #fafafa;
+  }
+
+  .print-assignee-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 8px;
+    margin-bottom: 12px;
+  }
+
+  .print-assignee-header h3 {
+    margin: 0;
+    font-size: 13pt;
+    font-weight: bold;
+  }
+
+  .print-assignee-count {
+    font-size: 10pt;
+    color: #666;
+  }
+
+  .print-assignee-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .print-assignee-item {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding-bottom: 8px;
+    border-bottom: 1px dashed #eee;
+  }
+
+  .print-assignee-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .print-assignee-item-details {
+    flex: 1;
+  }
+
+  .print-assignee-meta {
+    display: flex;
+    gap: 6px;
+    margin-top: 4px;
+    font-size: 9pt;
+  }
+
+  .print-meta-badge {
+    background-color: #eee;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 8.5pt;
+  }
 }

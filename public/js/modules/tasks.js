@@ -289,7 +289,7 @@ export function createTaskCard(task) {
     </div>
     
     <div class="task-meta">
-      <div class="meta-row">
+      <div class="meta-row meta-row-who">
         <span class="meta-label">Who:</span>
         <div>${assigneeHTML}</div>
       </div>
@@ -320,6 +320,16 @@ export function createTaskCard(task) {
 
   const deleteBtn = card.querySelector('.btn-action.delete');
   deleteBtn.addEventListener('click', () => confirmDelete('task', task.id, task.title));
+
+  card.addEventListener('click', (e) => {
+    if (
+      state.viewMode === 'assignee' &&
+      !e.target.closest('.checkbox-custom') &&
+      !e.target.closest('.task-check-wrapper')
+    ) {
+      showTaskModal(task);
+    }
+  });
 
   return card;
 }
