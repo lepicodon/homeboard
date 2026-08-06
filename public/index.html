@@ -159,6 +159,7 @@
                   <div class="view-switcher-group">
                     <button id="viewGridBtn" class="btn-view active" title="Grid View">⊞</button>
                     <button id="viewListBtn" class="btn-view" title="List View">☰</button>
+                    <button id="viewAssigneeBtn" class="btn-view" title="Assignee View">👥</button>
                   </div>
 
                   <button id="printBtn" class="btn btn-secondary btn-icon-text">
@@ -603,7 +604,10 @@
                   </div>
 
                   <form id="moduleSettingsForm" class="settings-form">
-                    <div class="form-group" style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px">
+                    <div
+                      class="form-group"
+                      style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px"
+                    >
                       <label style="font-weight: 600; margin-bottom: 4px">Enable / Disable Modules</label>
                       <div style="display: flex; align-items: center; gap: 10px">
                         <input
@@ -612,7 +616,9 @@
                           style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
                           checked
                         />
-                        <label for="settingModuleTasks" style="margin-bottom: 0; cursor: pointer">📋 Tasks Module</label>
+                        <label for="settingModuleTasks" style="margin-bottom: 0; cursor: pointer"
+                          >📋 Tasks Module</label
+                        >
                       </div>
                       <div style="display: flex; align-items: center; gap: 10px">
                         <input
@@ -621,7 +627,9 @@
                           style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
                           checked
                         />
-                        <label for="settingModuleCalendar" style="margin-bottom: 0; cursor: pointer">📅 Calendar Module</label>
+                        <label for="settingModuleCalendar" style="margin-bottom: 0; cursor: pointer"
+                          >📅 Calendar Module</label
+                        >
                       </div>
                       <div style="display: flex; align-items: center; gap: 10px">
                         <input
@@ -630,7 +638,9 @@
                           style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
                           checked
                         />
-                        <label for="settingModuleMemos" style="margin-bottom: 0; cursor: pointer">📌 Memos Module</label>
+                        <label for="settingModuleMemos" style="margin-bottom: 0; cursor: pointer"
+                          >📌 Memos Module</label
+                        >
                       </div>
                       <div style="display: flex; align-items: center; gap: 10px">
                         <input
@@ -639,7 +649,9 @@
                           style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
                           checked
                         />
-                        <label for="settingModuleShopping" style="margin-bottom: 0; cursor: pointer">🛒 Shopping Module</label>
+                        <label for="settingModuleShopping" style="margin-bottom: 0; cursor: pointer"
+                          >🛒 Shopping Module</label
+                        >
                       </div>
                       <div style="display: flex; align-items: center; gap: 10px">
                         <input
@@ -648,7 +660,9 @@
                           style="width: 16px; height: 16px; cursor: pointer; accent-color: var(--color-primary)"
                           checked
                         />
-                        <label for="settingModuleWeather" style="margin-bottom: 0; cursor: pointer">🌤️ Weather Module</label>
+                        <label for="settingModuleWeather" style="margin-bottom: 0; cursor: pointer"
+                          >🌤️ Weather Module</label
+                        >
                       </div>
                     </div>
                     <div class="settings-form-actions">
@@ -757,9 +771,7 @@
                     </div>
 
                     <div class="settings-form-actions">
-                      <button type="submit" id="memberFormSubmitBtn" class="btn btn-primary flex-grow">
-                        Add User
-                      </button>
+                      <button type="submit" id="memberFormSubmitBtn" class="btn btn-primary flex-grow">Add User</button>
                       <button type="button" id="cancelMemberEditBtn" class="btn btn-secondary hidden">Cancel</button>
                     </div>
                   </form>
@@ -1201,8 +1213,8 @@
 
         <div class="modal-body">
           <p class="warning-text" style="color: var(--danger-color); font-weight: bold; margin-bottom: 12px">
-            ⚠️ WARNING: This will overwrite all current tasks, users, categories, memos, and settings. This
-            action cannot be undone!
+            ⚠️ WARNING: This will overwrite all current tasks, users, categories, memos, and settings. This action
+            cannot be undone!
           </p>
           <div id="restorePasswordGroup" class="form-group hidden">
             <label for="restorePassword">This backup is password protected. Enter password to decrypt:</label>
@@ -1278,11 +1290,11 @@
     <!-- Print-Friendly Tasks Output -->
     <div id="printContainer" class="print-only">
       <div class="print-header">
-        <h1>🏠 HomeBoard - Chores & Task List</h1>
+        <h1 id="printTitle">🏠 HomeBoard - Chores & Task List</h1>
         <p id="printDate"></p>
       </div>
 
-      <table class="print-table">
+      <table id="printTable" class="print-table">
         <thead>
           <tr>
             <th style="width: 5%">Done</th>
@@ -1297,6 +1309,10 @@
           <!-- Dynamically populated before print -->
         </tbody>
       </table>
+
+      <div id="printAssigneeView" class="print-assignee-container">
+        <!-- Dynamically populated for assignee view print template -->
+      </div>
 
       <div class="print-footer">
         <p>Generated by HomeBoard. Get things done together!</p>

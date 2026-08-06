@@ -20,6 +20,8 @@ _Built with the help of Antigravity, using Gemini 3.6 Flash._
 
 ### 📋 Task Management
 
+- **Multiple View Modes (Grid, List & Assignee Views)**: Switch seamlessly between Grid View (`⊞`), List View (`☰`), and a multi-column **Assignee View** (`👥`). The Assignee View organizes tasks into fluid, side-by-side user columns (family members, unassigned, or external assignees) with low-height compact cards and automatic hiding of empty 0-task columns.
+- **Assignee Print Templates**: Dedicated print output formatted specifically for Assignee View, grouping printable checklists by assignee into structured, checkable print sections.
 - **Flexible Sizing**: Classify tasks as **Small** (green), **Medium** (amber), or **Big** (red).
 - **Assignees**: Assign tasks to multiple users, unassigned, or external names/services (e.g. plumber, guests).
 - **Recurrence Engine**: Support for **weekly, bi-weekly, monthly, or quarterly** task recurrence. When completed, next occurrence is spawned automatically with advanced deadlines in transactional operations.

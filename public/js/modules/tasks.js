@@ -84,10 +84,94 @@ export function renderTasks() {
     if (emptyState) emptyState.classList.remove('hidden');
   } else {
     if (emptyState) emptyState.classList.add('hidden');
-    displayTasks.forEach((task) => {
-      const card = createTaskCard(task);
-      tasksGrid.appendChild(card);
-    });
+
+    if (state.viewMode === 'assignee') {
+      const columns = [];
+
+      // 1. Family member columns
+      if (state.members && state.members.length > 0) {
+        state.members.forEach((member) => {
+          const memberTasks = displayTasks.filter(
+            (t) => t.assigned_type === 'members' && t.assignees && t.assignees.some((m) => m.id == member.id)
+          );
+          columns.push({
+            id: `member_${member.id}`,
+            name: member.name,
+            avatar: member.avatar,
+            color: member.color || '#3b82f6',
+            tasks: memberTasks
+          });
+        });
+      }
+
+      // 2. Unassigned column (always present)
+      const unassignedTasks = displayTasks.filter((t) => t.assigned_type === 'unassigned');
+      columns.push({
+        id: 'unassigned',
+        name: 'Unassigned',
+        avatar: null,
+        color: '#6b7280',
+        tasks: unassignedTasks,
+        icon: '❓'
+      });
+
+      // 3. Other / external column (always present)
+      const otherTasks = displayTasks.filter((t) => t.assigned_type === 'other');
+      columns.push({
+        id: 'other',
+        name: 'Other / External',
+        avatar: null,
+        color: '#8b5cf6',
+        tasks: otherTasks,
+        icon: '👤'
+      });
+
+      // Filter out columns with 0 tasks so only assignees/categories with active tasks are shown
+      const activeColumns = columns.filter((col) => col.tasks.length > 0);
+
+      if (activeColumns.length === 0) {
+        if (emptyState) emptyState.classList.remove('hidden');
+      } else {
+        activeColumns.forEach((col) => {
+          const colEl = document.createElement('div');
+          colEl.className = 'assignee-column';
+
+          const initials = col.name ? col.name.charAt(0).toUpperCase() : '?';
+          let avatarHTML = '';
+          if (col.avatar) {
+            avatarHTML = `<img class="assignee-avatar" src="${escapeHTML(col.avatar)}" alt="${escapeHTML(col.name)}">`;
+          } else if (col.icon) {
+            avatarHTML = `<div class="assignee-avatar assignee-avatar-icon" style="--avatar-bg: ${col.color}">${col.icon}</div>`;
+          } else {
+            avatarHTML = `<div class="assignee-avatar" style="--avatar-bg: ${col.color}">${escapeHTML(initials)}</div>`;
+          }
+
+          colEl.innerHTML = `
+            <div class="assignee-column-header">
+              <div class="assignee-header-info">
+                ${avatarHTML}
+                <span class="assignee-column-title">${escapeHTML(col.name)}</span>
+              </div>
+              <span class="assignee-count-badge">${col.tasks.length}</span>
+            </div>
+            <div class="assignee-column-body"></div>
+          `;
+
+          const bodyEl = colEl.querySelector('.assignee-column-body');
+          col.tasks.forEach((task) => {
+            const card = createTaskCard(task);
+            bodyEl.appendChild(card);
+          });
+
+          tasksGrid.appendChild(colEl);
+        });
+      }
+    } else {
+      displayTasks.forEach((task) => {
+        const card = createTaskCard(task);
+        tasksGrid.appendChild(card);
+      });
+    }
   }
 }
 
@@ -487,10 +571,13 @@ export function initPaginationEvents() {
 
 export function handlePrintChecklist() {
   const printTableBody = document.getElementById('printTableBody');
+  const printTable = document.getElementById('printTable');
+  const printAssigneeView = document.getElementById('printAssigneeView');
+  const printTitle = document.getElementById('printTitle');
   const printDateLabel = document.getElementById('printDate');
+
   if (!printTableBody) return;
 
-  printTableBody.innerHTML = '';
   const now = new Date();
   if (printDateLabel) {
     printDateLabel.textContent = `Date: ${now.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`;
@@ -524,45 +611,133 @@ export function handlePrintChecklist() {
     return matchesSearch && matchesStatus && matchesCategory && matchesSize && matchesAssignee;
   });
 
-  if (filteredTasksForPrint.length === 0) {
-    printTableBody.innerHTML =
-      '<tr><td colspan="6" style="text-align: center; font-style: italic; padding: 20px;">No tasks found matching current filters.</td></tr>';
-  } else {
-    filteredTasksForPrint.forEach((task) => {
-      const tr = document.createElement('tr');
+  if (state.viewMode === 'assignee') {
+    if (printTitle) printTitle.textContent = '🏠 HomeBoard - Tasks by Assignee';
+    if (printTable) printTable.style.display = 'none';
+    if (printAssigneeView) {
+      printAssigneeView.style.display = 'block';
+      printAssigneeView.innerHTML = '';
 
-      let assigneeText = 'Unassigned';
-      if (task.assigned_type === 'other') {
-        assigneeText = task.other_assignee || 'Other';
-      } else if (task.assigned_type === 'members' && task.assignees && task.assignees.length > 0) {
-        assigneeText = task.assignees.map((m) => m.name).join(', ');
-      }
+      if (filteredTasksForPrint.length === 0) {
+        printAssigneeView.innerHTML =
+          '<div style="text-align: center; font-style: italic; padding: 20px;">No tasks found matching current filters.</div>';
+      } else {
+        const columns = [];
+        if (state.members && state.members.length > 0) {
+          state.members.forEach((member) => {
+            const memberTasks = filteredTasksForPrint.filter(
+              (t) => t.assigned_type === 'members' && t.assignees && t.assignees.some((m) => m.id == member.id)
+            );
+            if (memberTasks.length > 0) {
+              columns.push({ name: member.name, tasks: memberTasks });
+            }
+          });
+        }
 
-      let dueText = '';
-      if (task.deadline) {
-        dueText = new Date(task.deadline + 'T00:00:00').toLocaleDateString(undefined, {
-          month: 'short',
-          day: 'numeric'
+        const unassignedTasks = filteredTasksForPrint.filter((t) => t.assigned_type === 'unassigned');
+        if (unassignedTasks.length > 0) {
+          columns.push({ name: 'Unassigned', tasks: unassignedTasks });
+        }
+
+        const otherTasks = filteredTasksForPrint.filter((t) => t.assigned_type === 'other');
+        if (otherTasks.length > 0) {
+          columns.push({ name: 'Other / External', tasks: otherTasks });
+        }
+
+        const gridEl = document.createElement('div');
+        gridEl.className = 'print-assignee-grid';
+
+        columns.forEach((col) => {
+          const sectionEl = document.createElement('div');
+          sectionEl.className = 'print-assignee-section';
+
+          let itemsHTML = '';
+          col.tasks.forEach((task) => {
+            let dueText = '';
+            if (task.deadline) {
+              dueText = new Date(task.deadline + 'T00:00:00').toLocaleDateString(undefined, {
+                month: 'short',
+                day: 'numeric'
+              });
+            }
+
+            itemsHTML += `
+              <div class="print-assignee-item">
+                <div class="print-checkbox ${task.completed ? 'checked' : ''}"></div>
+                <div class="print-assignee-item-details">
+                  <div class="print-task-title">${escapeHTML(task.title)}</div>
+                  ${task.description ? `<div class="print-task-desc">${escapeHTML(task.description)}</div>` : ''}
+                  <div class="print-assignee-meta">
+                    ${task.category_name ? `<span class="print-meta-badge">${escapeHTML(task.category_name)}</span>` : ''}
+                    <span class="print-meta-badge print-size-badge">${escapeHTML(task.size)}</span>
+                    ${dueText ? `<span class="print-meta-badge">📅 ${dueText}</span>` : ''}
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+
+          sectionEl.innerHTML = `
+            <div class="print-assignee-header">
+              <h3>${escapeHTML(col.name)}</h3>
+              <span class="print-assignee-count">${col.tasks.length} task${col.tasks.length === 1 ? '' : 's'}</span>
+            </div>
+            <div class="print-assignee-list">
+              ${itemsHTML}
+            </div>
+          `;
+          gridEl.appendChild(sectionEl);
         });
-      }
 
-      tr.innerHTML = `
-        <td style="text-align: center;">
-          <div class="print-checkbox ${task.completed ? 'checked' : ''}"></div>
-        </td>
-        <td>
-          <div class="print-task-title">${escapeHTML(task.title)}</div>
-          ${task.description ? `<div class="print-task-desc">${escapeHTML(task.description)}</div>` : ''}
-        </td>
-        <td>${task.category_name ? escapeHTML(task.category_name) : '-'}</td>
-        <td style="text-transform: capitalize;">
-          <span class="print-size-badge">${task.size}</span>
-        </td>
-        <td>${escapeHTML(assigneeText)}</td>
-        <td>${dueText || '-'}</td>
-      `;
-      printTableBody.appendChild(tr);
-    });
+        printAssigneeView.appendChild(gridEl);
+      }
+    }
+  } else {
+    if (printTitle) printTitle.textContent = '🏠 HomeBoard - Chores & Task List';
+    if (printAssigneeView) printAssigneeView.style.display = 'none';
+    if (printTable) printTable.style.display = 'table';
+
+    printTableBody.innerHTML = '';
+    if (filteredTasksForPrint.length === 0) {
+      printTableBody.innerHTML =
+        '<tr><td colspan="6" style="text-align: center; font-style: italic; padding: 20px;">No tasks found matching current filters.</td></tr>';
+    } else {
+      filteredTasksForPrint.forEach((task) => {
+        const tr = document.createElement('tr');
+
+        let assigneeText = 'Unassigned';
+        if (task.assigned_type === 'other') {
+          assigneeText = task.other_assignee || 'Other';
+        } else if (task.assigned_type === 'members' && task.assignees && task.assignees.length > 0) {
+          assigneeText = task.assignees.map((m) => m.name).join(', ');
+        }
+
+        let dueText = '';
+        if (task.deadline) {
+          dueText = new Date(task.deadline + 'T00:00:00').toLocaleDateString(undefined, {
+            month: 'short',
+            day: 'numeric'
+          });
+        }
+
+        tr.innerHTML = `
+          <td style="text-align: center;">
+            <div class="print-checkbox ${task.completed ? 'checked' : ''}"></div>
+          </td>
+          <td>
+            <div class="print-task-title">${escapeHTML(task.title)}</div>
+            ${task.description ? `<div class="print-task-desc">${escapeHTML(task.description)}</div>` : ''}
+          </td>
+          <td>${task.category_name ? escapeHTML(task.category_name) : '-'}</td>
+          <td style="text-transform: capitalize;">
+            <span class="print-size-badge">${task.size}</span>
+          </td>
+          <td>${escapeHTML(assigneeText)}</td>
+          <td>${dueText || '-'}</td>
+        `;
+        printTableBody.appendChild(tr);
+      });
+    }
   }
 
   document.body.classList.add('print-mode-tasks');

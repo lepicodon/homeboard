@@ -59,17 +59,15 @@ describe('API Integration Tests', () => {
     });
 
     test('PUT /api/settings should update module enable/disable settings', async () => {
-      const res = await request(app)
-        .put('/api/settings')
-        .send({
-          app_title: 'HomeBoard Test',
-          tasks_per_page: '10',
-          module_tasks_enabled: true,
-          module_calendar_enabled: false,
-          module_memos_enabled: true,
-          module_shopping_enabled: false,
-          module_weather_enabled: true
-        });
+      const res = await request(app).put('/api/settings').send({
+        app_title: 'HomeBoard Test',
+        tasks_per_page: '10',
+        module_tasks_enabled: true,
+        module_calendar_enabled: false,
+        module_memos_enabled: true,
+        module_shopping_enabled: false,
+        module_weather_enabled: true
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.module_tasks_enabled).toBe(true);

@@ -277,17 +277,19 @@ function initGreeting() {
 function initViewSwitcher() {
   const viewGridBtn = document.getElementById('viewGridBtn');
   const viewListBtn = document.getElementById('viewListBtn');
-  if (!viewGridBtn || !viewListBtn) return;
+  const viewAssigneeBtn = document.getElementById('viewAssigneeBtn');
 
   applyViewMode(state.viewMode);
 
-  viewGridBtn.addEventListener('click', () => {
-    applyViewMode('grid');
-  });
-
-  viewListBtn.addEventListener('click', () => {
-    applyViewMode('list');
-  });
+  if (viewGridBtn) {
+    viewGridBtn.addEventListener('click', () => applyViewMode('grid'));
+  }
+  if (viewListBtn) {
+    viewListBtn.addEventListener('click', () => applyViewMode('list'));
+  }
+  if (viewAssigneeBtn) {
+    viewAssigneeBtn.addEventListener('click', () => applyViewMode('assignee'));
+  }
 }
 
 function applyViewMode(mode) {
@@ -296,18 +298,20 @@ function applyViewMode(mode) {
 
   const viewGridBtn = document.getElementById('viewGridBtn');
   const viewListBtn = document.getElementById('viewListBtn');
+  const viewAssigneeBtn = document.getElementById('viewAssigneeBtn');
   const tasksGrid = document.getElementById('tasksGrid');
-  if (!viewGridBtn || !viewListBtn || !tasksGrid) return;
+  if (!tasksGrid) return;
 
+  if (viewGridBtn) viewGridBtn.classList.toggle('active', mode === 'grid');
+  if (viewListBtn) viewListBtn.classList.toggle('active', mode === 'list');
+  if (viewAssigneeBtn) viewAssigneeBtn.classList.toggle('active', mode === 'assignee');
+
+  tasksGrid.classList.remove('grid-view', 'list-view', 'assignee-view');
   if (mode === 'list') {
-    viewGridBtn.classList.remove('active');
-    viewListBtn.classList.add('active');
-    tasksGrid.classList.remove('grid-view');
     tasksGrid.classList.add('list-view');
+  } else if (mode === 'assignee') {
+    tasksGrid.classList.add('assignee-view');
   } else {
-    viewListBtn.classList.remove('active');
-    viewGridBtn.classList.add('active');
-    tasksGrid.classList.remove('list-view');
     tasksGrid.classList.add('grid-view');
   }
 
